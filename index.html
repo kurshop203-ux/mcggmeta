@@ -1,0 +1,392 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Share+Tech+Mono&display=swap');
+
+  /* ── VARIABEL GLOBAL ── */
+  :root {
+    --bg-dark:    #0f1218;
+    --bg-card:    #1a1f29;
+    --accent:     #d4af37;
+    --accent-glow: rgba(212, 175, 55, 0.3);
+    --text-main:  #e0e0e0;
+    --text-dim:   #999;
+    --border:     #333;
+    --green:      #27ae60;
+    --sidebar-w:  300px;
+  }
+
+  /* ── BASE ── */
+  body {
+    margin: 0; padding: 0;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── HEADER ── */
+  .app-header {
+    background: #151a21;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--accent);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    z-index: 10;
+  }
+  .app-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-shadow: 0 0 8px var(--accent-glow);
+    letter-spacing: 2px;
+  }
+  .header-btns { display: flex; gap: 20px; align-items: center; }
+  .hbtn {
+    padding: 8px 18px;
+    border: none; border-radius: 4px;
+    cursor: pointer; font-weight: bold;
+    font-family: 'Share Tech Mono', monospace;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+  }
+  .hbtn-green { background: var(--green); color: white; box-shadow: 0 2px 0 #1e8449; }
+  .hbtn-green:hover { background: #2ecc71; transform: translateY(-1px); }
+
+  /* ── LAYOUT UTAMA ── */
+  .app-body { display: flex; flex: 1; overflow: visible; min-height: 0; }
+
+  .sidebar-left, .sidebar-right {
+    width: var(--sidebar-w); background: #151a21;
+    padding: 15px; display: flex; flex-direction: column; gap: 15px;
+    border-right: 1px solid var(--border);
+  }
+  .sidebar-right { border-right: none; border-left: 1px solid var(--border); }
+
+.center-panel {
+  flex: 1; padding: 10px; overflow-y: auto;
+  min-height: 0;
+  background: radial-gradient(circle at center, #1a1f29 0%, #0a0c10 100%);
+  display: flex; justify-content: center;
+}
+
+  /* ── SIDEBAR KOMPONEN ── */
+  .sidebar-title { font-family: 'Cinzel Decorative', serif; font-size: 1.1rem; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  .filter-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .filter-bar select { background: #1a1f29; border: 1px solid var(--border); padding: 6px; border-radius: 4px; width: 100%; color: white; }
+  .filter-bar select:first-child { grid-column: span 2; }
+  .hero-list { flex: 1; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 4px; padding: 5px; }
+
+  /* ── HERO CARD ── */
+  .hero-card {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px; margin-bottom: 6px;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px;
+  }
+  .hero-card-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #8a6d1f);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold; color: #1a1f29; font-size: 0.85rem;
+    flex-shrink: 0; overflow: hidden;
+  }
+  .hero-card-icon img { width: 100%; height: 100%; object-fit: cover; }
+  .hero-card-info { display: flex; flex-direction: column; line-height: 1.3; }
+  .hero-card-name { font-weight: bold; font-size: 0.9rem; }
+  .hero-card-meta { font-size: 0.7rem; color: var(--text-dim); font-family: 'Share Tech Mono', monospace; }
+  .hero-card-btns { display: flex; gap: 4px; margin-top: 5px; }
+  .hc-btn { font-size: 0.65rem; padding: 2px 7px; border-radius: 3px; border: none; cursor: pointer; font-weight: bold; font-family: 'Share Tech Mono', monospace; }
+  .hc-btn-grid  { background: rgba(212,175,55,0.15); color: var(--accent); border: 1px solid var(--accent); }
+  .hc-btn-grid:hover  { background: rgba(212,175,55,0.3); }
+  .hc-btn-smart { background: rgba(52,152,219,0.15); color: #3498db; border: 1px solid #3498db; }
+  .hc-btn-smart:hover { background: rgba(52,152,219,0.3); }
+  .sp-slot-filled { border-color: #3498db !important; }
+  .sp-slot-filled img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .sp-slot-stars { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; background: rgba(0,0,0,0.6); padding: 1px 0; font-size: 0.6rem; color: #3498db; line-height: 1; }
+
+  /* ── GRID ARENA ── */
+  .global-grid-wrap { display: flex; flex-direction: column; gap: 8px; }
+  .row-arena { display: flex; flex-direction: column; gap: 8px; }
+  .row-label { font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; color: var(--accent); letter-spacing: 3px; text-align: center; }
+  .row-slots { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.grid-slot-placeholder {
+  width: 52px; height: 52px;
+    background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1);
+    border-radius: 6px; transition: all 0.3s ease;
+    position: relative; overflow: hidden; cursor: pointer;
+  }
+  .grid-slot-placeholder:hover { border-color: var(--accent); background: rgba(212,175,55,0.05); }
+  .grid-slot-placeholder.filled { border: 1px solid var(--accent); }
+  .grid-slot-placeholder img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .grid-slot-stars {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    display: flex; justify-content: center; gap: 1px;
+    background: rgba(0,0,0,0.6); padding: 1px 0;
+    font-size: 0.6rem; color: var(--accent); line-height: 1;
+  }
+.row-smart { margin-top: 8px; padding-top: 8px; gap: 4px; }
+  .row-smart .row-label { color: #3498db; }
+  .row-smart .grid-slot-placeholder { border-color: rgba(52,152,219,0.3); }
+  .row-smart .grid-slot-placeholder:hover { border-color: #3498db; background: rgba(52,152,219,0.08); }
+
+  .score-header { font-family: 'Cinzel Decorative', serif; color: var(--accent); margin-bottom: 10px; }
+
+  /* ── MODAL ── */
+  .detail-modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;        /* mulai dari atas supaya konten panjang bisa discroll */
+    z-index: 1000;
+    padding: 16px;
+    box-sizing: border-box;
+    overflow-y: auto;               /* overlay sendiri jadi scrollable di layar kecil */
+  }
+  .detail-modal-box {
+    background: var(--bg-card);
+    width: 100%;
+    max-width: 860px;               /* lebar lebih besar untuk render_simulation yang data-heavy */
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    box-shadow: 0 0 40px rgba(0,0,0,0.7);
+    box-sizing: border-box;
+    margin: auto;                   /* tengah secara vertikal kalau konten pendek */
+  }
+  .detail-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+    position: sticky;               /* header tetap kelihatan saat scroll konten */
+    top: -20px;                     /* kompensasi padding box */
+    background: var(--bg-card);
+    z-index: 2;
+    margin-left: -20px;
+    margin-right: -20px;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  #detail-modal-content {
+    max-height: none;               /* biarkan overlay yang scroll, bukan konten */
+    overflow: visible;
+  }
+  .detail-modal-close {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-family: 'Share Tech Mono', monospace;
+    transition: all 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .detail-modal-close:hover { color: #fff; border-color: #e74c3c; background: rgba(231,76,60,0.12); }
+
+  /* ── RESPONSIF — TABLET ── */
+  @media (max-width: 900px) {
+    :root { --sidebar-w: 220px; }
+    .app-title { font-size: 1.1rem; }
+    .hbtn { padding: 7px 12px; font-size: 0.8rem; }
+  }
+
+  /* ── RESPONSIF — MOBILE (≤ 640px) ── */
+  @media (max-width: 640px) {
+    :root { --sidebar-w: 100%; }
+
+    /* Stack layout vertikal */
+    .app-body { flex-direction: column; overflow-y: auto; height: auto; }
+    body { height: auto; min-height: 100vh; overflow: auto; }
+
+    /* Header mobile: wrap ke 2 baris */
+    .app-header { flex-direction: column; align-items: flex-start; gap: 8px; padding: 10px 14px; }
+    .header-btns { flex-wrap: wrap; gap: 8px; width: 100%; }
+    .hbtn { flex: 1; min-width: 120px; font-size: 0.75rem; padding: 8px 8px; text-align: center; }
+    .app-title { font-size: 1rem; }
+
+    /* Sidebar kiri: collapsed horizontal */
+    .sidebar-left {
+      width: 100%; border-right: none;
+      border-bottom: 1px solid var(--border);
+      padding: 10px 12px;
+    }
+    .hero-list { max-height: 180px; }
+
+    /* Center panel: lebih pas di mobile */
+
+    .grid-slot-placeholder { width: 48px; height: 48px; }
+
+    /* Sidebar kanan: di bawah grid */
+    .sidebar-right {
+      width: 100%; border-left: none;
+      border-top: 1px solid var(--border);
+      padding: 10px 12px;
+    }
+
+    /* Modal: fullscreen di mobile */
+    .detail-modal-overlay { padding: 0; align-items: flex-start; }
+    .detail-modal-box {
+      border-radius: 0;
+      border-left: none; border-right: none;
+      min-height: 100dvh;
+      max-width: 100%;
+      padding: 14px;
+    }
+    .detail-modal-header {
+      top: -14px;
+      margin-left: -14px; margin-right: -14px;
+      padding-left: 14px; padding-right: 14px;
+    }
+  }
+
+  .star-picker { display: flex; gap: 8px; margin: 10px 0; }
+  .star-picker button { background: var(--bg-dark); border: 1px solid var(--border); color: var(--text-dim); padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+  .star-picker button.active { border-color: var(--accent); color: var(--accent); background: rgba(212,175,55,0.1); }
+  .modal-remove-btn { background: #c0392b; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+  .modal-remove-btn:hover { background: #e74c3c; }
+  .synergy-list { font-size: 0.8rem; color: var(--text-dim); margin-top: 12px; }
+  .synergy-list div { margin-bottom: 4px; }
+
+  /* ── SMART PLACEMENT — feedback panel (progress/log/result) ──
+     Ditaruh langsung di bawah baris Smart Placement inline, BUKAN
+     di dalam modal terpisah — supaya hasil dari server kelihatan
+     oleh user saat klik "🚀 Jalankan". */
+  #sp-result {
+    padding: 10px; font-size: .75rem;
+    border: 1px solid var(--border); border-radius: 6px;
+    background: var(--bg-card);
+    max-height: 140px; overflow-y: auto; display: none; margin-top: 8px;
+  }
+  #sp-result .sp-r-section { margin-bottom: 6px; }
+  #sp-result .sp-r-label { color: var(--accent); font-weight: bold; margin-bottom: 2px; }
+  #sp-result .sp-r-ok   { color: #2ecc71; }
+  #sp-result .sp-r-warn { color: #f39c12; }
+  #sp-result .sp-r-err  { color: #e74c3c; }
+
+  /* Log realtime */
+  #sp-log {
+    padding: 8px 10px; font-family: 'Share Tech Mono', monospace;
+    font-size: .72rem; max-height: 160px; overflow-y: auto;
+    background: #0a0c10; border: 1px solid var(--border); border-radius: 6px;
+    display: none; flex-direction: column; gap: 2px; margin-top: 8px;
+  }
+  #sp-log.open { display: flex; }
+  .sp-log-line { display: flex; gap: 8px; line-height: 1.4; }
+  .sp-log-time { color: #555; flex-shrink: 0; }
+  .sp-log-info  { color: #aaa; }
+  .sp-log-ok    { color: #2ecc71; }
+  .sp-log-warn  { color: #f39c12; }
+  .sp-log-error { color: #e74c3c; }
+  #sp-progress {
+    height: 3px; background: #1a1f29; border-radius: 2px;
+    overflow: hidden; display: none; margin-top: 12px;
+  }
+  #sp-progress-bar {
+    height: 100%; background: var(--green);
+    width: 0%; transition: width .3s;
+  }
+</style>
+
+
+<!-- ── HEADER ── -->
+<div class="app-header">
+  <div class="app-title">⚔ MC Go Go</div>
+  <div class="header-btns">
+  <button class="hbtn hbtn-green" onclick="CARI()">🔍 Cari Combo</button>
+  <button class="hbtn hbtn-green" id="btn-capture-grid">📋 Debug Grid</button>
+  <button class="hbtn hbtn-green" id="btn-copy-buffs">📊 Copy Buffs</button>
+  <!-- taruh setelah btn-copy-buffs atau di mana pun kamu mau -->
+<button class="hbtn hbtn-green" id="btn-toggle-hero-table">📋 Hero Table</button>
+  <button class="hbtn hbtn-green" id="btn-export-cache">💾 Export Cache</button>
+<input type="file" id="input-import-cache" accept=".json" style="display:none">
+<button class="hbtn hbtn-green" id="btn-import-cache">📂 Import Cache</button>
+</div>
+</div>
+
+
+<!-- ── BODY ── -->
+<div class="app-body">
+  <div class="sidebar-left">
+    <div class="sidebar-title">📋 Hero Daftar</div>
+    <div class="filter-bar">
+      <select id="filter-gold" onchange="applyFilters()">
+        <option value="">Semua Gold</option>
+        <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+        <option value="4">4</option><option value="5">5</option>
+      </select>
+      <select id="filter-role"   onchange="applyFilters()"><option value="">Semua Role</option></select>
+      <select id="filter-fraksi" onchange="applyFilters()"><option value="">Semua Fraksi</option></select>
+    </div>
+    <div class="hero-list" id="hero-list"></div>
+  </div>
+
+<div class="center-panel">
+<div style="display:flex; gap:8px; width:100%; max-width:1100px;">
+    
+    <!-- Arena + Smart bawah -->
+    <div style="display:flex; flex-direction:column; gap:20px; flex:1;">
+      <div class="global-grid-wrap" id="global-grid-wrap"></div>
+      
+      <!-- Smart Placement -->
+      <div class="row-smart" id="smart-placement-row">
+        <div class="row-label" style="color:#3498db; font-family:'Share Tech Mono',monospace; font-size:0.75rem; letter-spacing:3px; text-align:center;">◈ SMART PLACEMENT</div>
+        <div class="row-slots" id="smart-placement-slots" style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;"></div>
+        <div id="sp-progress"><div id="sp-progress-bar"></div></div>
+        <div id="sp-log"></div>
+        <div id="sp-result"></div>
+      </div>
+    </div>
+
+    <!-- Auto Roll (sejajar arena) -->
+    <div id="autoroll-wrap" style="display:flex; flex-direction:column; flex-shrink:0;">
+      <div style="font-family:'Share Tech Mono',monospace; font-size:0.75rem; color:#27ae60; letter-spacing:3px; text-align:center;">◈ AUTO ROLL</div>
+      <div id="autoroll-grid"></div>
+    </div>
+
+  </div>
+</div>
+
+  <div class="sidebar-right">
+    <div class="score-header">
+      🏆 HERO SCORES
+      <span style="font-size:.7em; color:var(--text-dim); font-family:'Share Tech Mono',monospace;">(klik ▶ untuk detail)</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── MODAL DETAIL HERO ── -->
+<div class="detail-modal-overlay" id="detail-modal" style="display:none;">
+  <div class="detail-modal-box">
+    <div class="detail-modal-header">
+      <div style="font-family:'Cinzel Decorative',serif; font-size:.7em; color:var(--accent); letter-spacing:2px;">📊 HERO DETAIL</div>
+      <button class="detail-modal-close" onclick="closeDetailModal()">✕ Tutup</button>
+    </div>
+    <div id="detail-modal-content"></div>
+  </div>
+</div>
+
+
+<!-- ── SCRIPT: HERO LIST & FILTER ── -->
+<script type="module" src="./ui/hero_list.js"></script>
+<!-- ── SCRIPT: GRID & MODAL ── -->
+<script src="./ui/grid.js"></script>
+<!-- ── HEADER ── -->
+<script type="module" src="./ui/grid_table_sync.js"></script>
+<script type="module" src="./cache/cache_buttons.js"></script>
+<!-- ── PYTHON ── -->
+<script src="./ui/grid_sync_from_server.js"></script>
+<script src="./ui/smartplacement.js"></script>
+<script src="./ui/autoroll.js"></script>
