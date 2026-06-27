@@ -53,61 +53,45 @@ function handler({ heroList, qualifying, tierIndex }) {
   });
 }
 
-// ── MODAL REGISTRASI ──────────────────────────────────────────
-// Guard: kode ini cuma boleh jalan di main thread (browser).
-// Tanpa guard, baris document.addEventListener() di bawah ini
-// dieksekusi langsung saat modul di-import — termasuk saat
-// diimpor di dalam Web Worker (combo_worker.js), di mana
-// `document` tidak ada → ReferenceError: document is not defined.
-if (typeof document !== 'undefined') {
-  document.addEventListener('cari:register-modals', ({ detail: { heroList } }) => {
-    const uniqueCount = new Set(
-      heroList
-        .filter(h => toArray(h.fraksi).includes('Enchanted Tales'))
-        .map(h => h.name)
-    ).size;
+// ── INLINE INPUT UI ───────────────────────────────────────────
+export function renderInputUI(container, heroList) {
+  const uniqueCount = new Set(
+    heroList
+      .filter(h => toArray(h.fraksi).includes('Enchanted Tales'))
+      .map(h => h.name)
+  ).size;
 
-    const tierIndex = getActiveTierIndex(uniqueCount, THRESHOLDS);
-    if (tierIndex === -1) return;
+  const tierIndex = getActiveTierIndex(uniqueCount, THRESHOLDS);
+  if (tierIndex === -1) return; // buff tidak aktif, tidak inject apapun
 
-    window.__registerModalQueue((_, next) => {
-      showEnchantedTalesFragmentModal(uniqueCount, next);
-    });
-  });
-}
+  const accentColor   = '#9b59b6';
+  const currentFrag   = window.enchantedTalesFragment ?? 0;
 
-function showEnchantedTalesFragmentModal(currentCount, onConfirm) {
-  const modal   = document.getElementById('detail-modal');
-  const content = document.getElementById('detail-modal-content');
-  if (!modal || !content) { onConfirm(); return; }
-
-  content.style.maxHeight = '80vh';
-  content.style.overflowY = 'auto';
-  content.style.paddingRight = '6px';
-
-  const accentColor      = '#9b59b6';
-  const currentFragment  = window.enchantedTalesFragment ?? 0;
-
-  content.innerHTML = `
-    <h3 style="margin-top:0; color:${accentColor};">📖 Sinergi Enchanted Tales Aktif</h3>
-    <div style="font-size:0.8rem; color:#999; margin-bottom:14px;">
-      Terdeteksi <b style="color:#fff;">${currentCount}</b> hero unik fraksi Enchanted Tales di grid.
-      Masukkan Fragment Enchanted Tales (berlaku global) sebelum melanjutkan kalkulasi.
+  const section = document.createElement('div');
+  section.style.cssText = `
+    border: 1px solid ${accentColor}44;
+    border-left: 3px solid ${accentColor};
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-top: 8px;
+    background: ${accentColor}08;
+  `;
+  section.innerHTML = `
+    <div style="color:${accentColor}; font-size:0.8rem; font-weight:bold; margin-bottom:8px;">
+      📖 Enchanted Tales — Fragment <span style="font-weight:normal; color:#666;">(Tier ${tierIndex + 1})</span>
     </div>
     <div style="
-      background:#ffffff08; border:1px solid ${accentColor}33;
-      border-radius:6px; padding:10px 14px; margin-bottom:16px;
       display:flex; align-items:center; justify-content:space-between; gap:10px;
     ">
       <div>
-        <div style="color:#ccc; font-size:0.78rem;">🧩 Fragment Enchanted Tales (0-40)</div>
+        <div style="color:#ccc; font-size:0.78rem;">🧩 Fragment Enchanted Tales (0–40)</div>
         <div style="color:#666; font-size:0.7rem; margin-top:2px;">Bonus % ke DMG_Bonus</div>
       </div>
       <input
         type="number"
-        id="enchantedtales-fragment-modal-input"
+        id="enchantedtales-fragment-inline-input"
         min="0" max="40" step="1"
-        value="${currentFragment}"
+        value="${currentFrag}"
         style="
           width:80px; padding:8px; text-align:center;
           background:#0f1218; border:1px solid ${accentColor}66; border-radius:4px;
@@ -116,33 +100,20 @@ function showEnchantedTalesFragmentModal(currentCount, onConfirm) {
         "
       />
     </div>
-    <button id="enchantedtales-fragment-confirm-btn" style="
-      width:100%; padding:10px 16px;
-      background:${accentColor}; color:#0f1218;
-      border:none; border-radius:6px; cursor:pointer;
-      font-weight:bold; font-family:'Share Tech Mono', monospace;
-      font-size:0.9rem; text-transform:uppercase; letter-spacing:1px;
-    ">▶ Lanjut Hitung Combo</button>
   `;
 
-  modal.style.display = 'flex';
+  container.appendChild(section);
+}
 
-  const input = document.getElementById('enchantedtales-fragment-modal-input');
-  const btn   = document.getElementById('enchantedtales-fragment-confirm-btn');
+export function collectInput() {
+  const input = document.getElementById('enchantedtales-fragment-inline-input');
+  if (!input) return true; // section tidak dirender (buff tidak aktif), skip
 
-  setTimeout(() => input?.focus(), 50);
-
-  const confirm = () => {
-    let val = parseInt(input.value, 10);
-    if (isNaN(val)) val = 0;
-    val = Math.max(0, Math.min(40, val));
-    window.enchantedTalesFragment = val;
-    modal.style.display = 'none';
-    onConfirm();
-  };
-
-  btn.onclick = confirm;
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') confirm(); });
+  let val = parseInt(input.value, 10);
+  if (isNaN(val)) val = 0;
+  val = Math.max(0, Math.min(MAX_FRAGMENT, val));
+  window.enchantedTalesFragment = val;
+  return true; // 0 adalah nilai valid
 }
 
 // ── RENDER PANEL ──────────────────────────────────────────────
@@ -210,5 +181,7 @@ export default {
   global:       {},
   role_bonus:   {},
   handler,
-  renderPanel: (hero) => renderEnchantedTalesPanel(hero), // ← tambah ini
+  renderPanel:   (hero)            => renderEnchantedTalesPanel(hero),
+  renderInputUI: (container, list) => renderInputUI(container, list),
+  collectInput:  ()                => collectInput(),
 };

@@ -65,63 +65,45 @@ function handler({ heroList, qualifying, tierIndex }) {
   });
 }
 
-// ── MODAL REGISTRASI ──────────────────────────────────────────
-// Daftarkan modal input Poin Neobeasts ke antrian find_combo.js.
-// Hanya muncul kalau ada ≥2 hero unik Neobeasts di grid.
-// Guard: kode ini cuma boleh jalan di main thread (browser).
-// Tanpa guard, baris document.addEventListener() di bawah ini
-// dieksekusi langsung saat modul di-import — termasuk saat
-// diimpor di dalam Web Worker (combo_worker.js), di mana
-// `document` tidak ada → ReferenceError: document is not defined.
-if (typeof document !== 'undefined') {
-  document.addEventListener('cari:register-modals', ({ detail: { heroList } }) => {
-    const uniqueCount = new Set(
-      heroList
-        .filter(h => toArray(h.fraksi).includes('Neobeasts'))
-        .map(h => h.name)
-    ).size;
+// ── INLINE INPUT UI ───────────────────────────────────────────
+export function renderInputUI(container, heroList) {
+  const uniqueCount = new Set(
+    heroList
+      .filter(h => toArray(h.fraksi).includes('Neobeasts'))
+      .map(h => h.name)
+  ).size;
 
-    const tierIndex = getActiveTierIndex(uniqueCount, THRESHOLDS);
-    if (tierIndex === -1) return; // tidak aktif, skip
+  const tierIndex = getActiveTierIndex(uniqueCount, THRESHOLDS);
+  if (tierIndex === -1) return; // buff tidak aktif, tidak inject apapun
 
-    window.__registerModalQueue((_, next) => {
-      showNeobeastsPoinModal(uniqueCount, next);
-    });
-  });
-}
+  const accentColor  = '#2ecc71';
+  const currentPoin  = window.neobeastsPoin ?? 0;
 
-function showNeobeastsPoinModal(currentCount, onConfirm) {
-  const modal   = document.getElementById('detail-modal');
-  const content = document.getElementById('detail-modal-content');
-  if (!modal || !content) { onConfirm(); return; }
-
-  content.style.maxHeight = '80vh';
-  content.style.overflowY = 'auto';
-  content.style.paddingRight = '6px';
-
-  const accentColor   = '#2ecc71';
-  const currentPoin   = window.neobeastsPoin ?? 0;
-
-  content.innerHTML = `
-    <h3 style="margin-top:0; color:${accentColor};">🐾 Sinergi Neobeasts Aktif</h3>
-    <div style="font-size:0.8rem; color:#999; margin-bottom:14px;">
-      Terdeteksi <b style="color:#fff;">${currentCount}</b> hero unik fraksi Neobeasts di grid.
-      Masukkan Poin Neobeasts (berlaku global) sebelum melanjutkan kalkulasi.
+  const section = document.createElement('div');
+  section.style.cssText = `
+    border: 1px solid ${accentColor}44;
+    border-left: 3px solid ${accentColor};
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-top: 8px;
+    background: ${accentColor}08;
+  `;
+  section.innerHTML = `
+    <div style="color:${accentColor}; font-size:0.8rem; font-weight:bold; margin-bottom:8px;">
+      🐾 Neobeasts — Poin <span style="font-weight:normal; color:#666;">(Tier ${tierIndex + 1})</span>
     </div>
     <div style="
-      background:#ffffff08; border:1px solid ${accentColor}33;
-      border-radius:6px; padding:10px 14px; margin-bottom:16px;
       display:flex; align-items:center; justify-content:space-between; gap:10px;
     ">
       <div>
-        <div style="color:#ccc; font-size:0.78rem;">⭐ Poin Neobeasts (0-999)</div>
+        <div style="color:#ccc; font-size:0.78rem;">⭐ Poin Neobeasts (0–999)</div>
         <div style="color:#666; font-size:0.7rem; margin-top:2px;">
           Bonus % ke Physical_ATK, Magic_ATK, dan HP
         </div>
       </div>
       <input
         type="number"
-        id="neobeasts-poin-modal-input"
+        id="neobeasts-poin-inline-input"
         min="0" max="999" step="1"
         value="${currentPoin}"
         style="
@@ -132,33 +114,20 @@ function showNeobeastsPoinModal(currentCount, onConfirm) {
         "
       />
     </div>
-    <button id="neobeasts-poin-confirm-btn" style="
-      width:100%; padding:10px 16px;
-      background:${accentColor}; color:#0f1218;
-      border:none; border-radius:6px; cursor:pointer;
-      font-weight:bold; font-family:'Share Tech Mono', monospace;
-      font-size:0.9rem; text-transform:uppercase; letter-spacing:1px;
-    ">▶ Lanjut</button>
   `;
 
-  modal.style.display = 'flex';
+  container.appendChild(section);
+}
 
-  const input = document.getElementById('neobeasts-poin-modal-input');
-  const btn   = document.getElementById('neobeasts-poin-confirm-btn');
+export function collectInput() {
+  const input = document.getElementById('neobeasts-poin-inline-input');
+  if (!input) return true; // section tidak dirender (buff tidak aktif), skip
 
-  setTimeout(() => input?.focus(), 50);
-
-  const confirm = () => {
-    let val = parseInt(input.value, 10);
-    if (isNaN(val)) val = 0;
-    val = Math.max(0, Math.min(999, val));
-    window.neobeastsPoin = val;
-    modal.style.display = 'none';
-    onConfirm();
-  };
-
-  btn.onclick = confirm;
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') confirm(); });
+  let val = parseInt(input.value, 10);
+  if (isNaN(val)) val = 0;
+  val = Math.max(0, Math.min(MAX_POIN, val));
+  window.neobeastsPoin = val;
+  return true; // 0 adalah nilai valid
 }
 
 // ── RENDER PANEL ──────────────────────────────────────────────
@@ -230,5 +199,7 @@ export default {
   global:       {},
   role_bonus:   {},
   handler,
-  renderPanel: (hero) => renderNeobeastsPanel(hero), // ← tambah ini
+  renderPanel:    (hero)            => renderNeobeastsPanel(hero),
+  renderInputUI:  (container, list) => renderInputUI(container, list),
+  collectInput:   ()                => collectInput(),
 };

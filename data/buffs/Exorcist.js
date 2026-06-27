@@ -138,114 +138,113 @@ const phantomMagDmg  = skillMagTotal  * phantomDmgMultiplier * jumlahUnit;
   });
 }
 
-// ── MODAL REGISTRASI ──────────────────────────────────────────
-// Daftarkan modal pilih Phantom template ke antrian find_combo.js.
-// Guard: kode ini cuma boleh jalan di main thread (browser).
-// Tanpa guard, baris document.addEventListener() di bawah ini
-// dieksekusi langsung saat modul di-import — termasuk saat
-// diimpor di dalam Web Worker (combo_worker.js), di mana
-// `document` tidak ada → ReferenceError: document is not defined.
-if (typeof document !== 'undefined') {
-  document.addEventListener('cari:register-modals', ({ detail: { heroList } }) => {
-    const qualifying = heroList.filter(h => toArray(h.fraksi).includes('Exorcist'));
-    const uniqueCount = new Set(qualifying.map(h => h.name)).size;
-
-    const tierIndex = getActiveTierIndex(uniqueCount, THRESHOLDS);
-    if (tierIndex === -1) return;
-
-    window.__registerModalQueue((_, next) => {
-      showExorcistTemplateModal(qualifying, tierIndex, next);
-    });
-  });
-}
-
-function showExorcistTemplateModal(qualifying, tierIndex, onConfirm) {
-  const modal   = document.getElementById('detail-modal');
-  const content = document.getElementById('detail-modal-content');
-  if (!modal || !content) { onConfirm(); return; }
-
-  // Kalau hanya 1 unit, tidak perlu pilih
-  if (qualifying.length === 1) {
-    window.exorcistTemplateLabel = qualifying[0].label ?? qualifying[0].name;
-    onConfirm();
-    return;
-  }
-
-  content.style.maxHeight = '80vh';
-  content.style.overflowY = 'auto';
-  content.style.paddingRight = '6px';
+// ── INLINE INPUT UI ───────────────────────────────────────────
+export function renderInputUI(container, heroList) {
+  const qualifying  = heroList.filter(h => toArray(h.fraksi).includes('Exorcist'));
+  const uniqueCount = new Set(qualifying.map(h => h.name)).size;
+  const tierIndex   = getActiveTierIndex(uniqueCount, THRESHOLDS);
+  if (tierIndex === -1) return;
 
   const accentColor    = '#4a90d9';
   const currentPilihan = window.exorcistTemplateLabel ?? '';
   const starsStr       = n => '★'.repeat(n) + '☆'.repeat(3 - n);
 
+  const section = document.createElement('div');
+  section.id = 'exorcist-input-section';
+  section.style.cssText = `
+    border:1px solid ${accentColor}44;
+    border-left:3px solid ${accentColor};
+    border-radius:6px; padding:10px 12px; margin-top:8px;
+    background:${accentColor}08;
+  `;
+
+  // Auto-select kalau hanya 1 hero
+  if (qualifying.length === 1) {
+    const label = qualifying[0].label ?? qualifying[0].name;
+    section.innerHTML = `
+      <div style="color:${accentColor}; font-size:0.8rem; font-weight:bold; margin-bottom:6px;">
+        👻 Exorcist Tier ${tierIndex + 1} — Phantom Template
+      </div>
+      <div style="font-size:0.78rem; color:#aaa;">
+        ⭐ <b style="color:#fff;">${label}</b> otomatis dipilih sebagai Phantom Template.
+      </div>
+      <input type="hidden" id="exorcist-template-input" value="${label}">
+    `;
+    container.appendChild(section);
+    return;
+  }
+
   const optionCards = qualifying.map(h => {
-    const label     = h.label ?? h.name;
+    const label      = h.label ?? h.name;
     const isSelected = label === currentPilihan;
     return `
-      <div
-        class="exorcist-option-card"
-        data-label="${label}"
-        style="
-          padding: 10px 14px; margin-bottom: 8px; cursor: pointer;
-          background: ${isSelected ? accentColor + '22' : '#ffffff08'};
-          border: 2px solid ${isSelected ? accentColor : '#333'};
-          border-radius: 6px; transition: border-color 0.15s;
-        "
-      >
-        <div style="font-weight:bold; color:${isSelected ? accentColor : '#fff'};">${label}</div>
-        <div style="font-size:0.75rem; color:#999; margin-top:2px;">
+      <div class="exorcist-option-card" data-label="${label}" style="
+        padding:8px 12px; margin-bottom:6px; cursor:pointer;
+        background:${isSelected ? accentColor + '22' : '#ffffff08'};
+        border:2px solid ${isSelected ? accentColor : '#333'};
+        border-radius:6px; transition:border-color 0.15s;
+      ">
+        <div style="font-weight:bold; color:${isSelected ? accentColor : '#fff'}; font-size:0.82rem;">${label}</div>
+        <div style="font-size:0.72rem; color:#999; margin-top:2px;">
           ${starsStr(h.stars)} · ${toArray(h.role).join(', ') || '-'}
         </div>
       </div>
     `;
   }).join('');
 
-  content.innerHTML = `
-    <h3 style="margin-top:0; color:${accentColor};">👻 Pilih Phantom Template — Exorcist Tier ${tierIndex + 1}</h3>
-    <div style="font-size:0.8rem; color:#999; margin-bottom:14px;">
-      Pilih 1 hero Exorcist yang akan menjadi <b style="color:#fff;">Phantom Template</b>.
-      Stat Phantom dihitung dari hero ini.
+  section.innerHTML = `
+    <div style="color:${accentColor}; font-size:0.8rem; font-weight:bold; margin-bottom:8px;">
+      👻 Pilih Phantom Template — Exorcist Tier ${tierIndex + 1}
     </div>
     <div id="exorcist-option-list">${optionCards}</div>
-    <button id="exorcist-confirm-btn" style="
-      width:100%; padding:10px 16px; margin-top:10px;
-      background:${accentColor}; color:#0f1218;
-      border:none; border-radius:6px; cursor:pointer;
-      font-weight:bold; font-family:'Share Tech Mono', monospace;
-      font-size:0.9rem; text-transform:uppercase; letter-spacing:1px;
-      opacity: ${currentPilihan ? 1 : 0.4};
-    " ${currentPilihan ? '' : 'disabled'}>▶ Lanjut</button>
   `;
 
-  modal.style.display = 'flex';
+  container.appendChild(section);
 
+  // Tracking state lokal via data attribute agar bisa dibaca collectInput
   let selected = currentPilihan;
 
-  // Klik kartu
-  document.getElementById('exorcist-option-list').addEventListener('click', e => {
+  section.querySelector('#exorcist-option-list').addEventListener('click', e => {
     const card = e.target.closest('.exorcist-option-card');
     if (!card) return;
     selected = card.dataset.label;
 
-    document.querySelectorAll('.exorcist-option-card').forEach(c => {
+    section.querySelectorAll('.exorcist-option-card').forEach(c => {
       const isThis = c.dataset.label === selected;
       c.style.background  = isThis ? accentColor + '22' : '#ffffff08';
       c.style.borderColor = isThis ? accentColor : '#333';
       c.querySelector('div').style.color = isThis ? accentColor : '#fff';
     });
 
-    const btn = document.getElementById('exorcist-confirm-btn');
-    btn.disabled = false;
-    btn.style.opacity = '1';
+    // Tandai card terpilih dengan data attribute supaya collectInput bisa baca
+    section.querySelectorAll('.exorcist-option-card').forEach(c => c.removeAttribute('data-selected'));
+    card.setAttribute('data-selected', 'true');
   });
 
-  document.getElementById('exorcist-confirm-btn').onclick = () => {
-    if (!selected) return;
-    window.exorcistTemplateLabel = selected;
-    modal.style.display = 'none';
-    onConfirm();
-  };
+  // Tandai pre-selected (jika ada)
+  if (currentPilihan) {
+    const preCard = section.querySelector(`.exorcist-option-card[data-label="${CSS.escape(currentPilihan)}"]`);
+    if (preCard) preCard.setAttribute('data-selected', 'true');
+  }
+}
+
+export function collectInput() {
+  const section = document.getElementById('exorcist-input-section');
+  if (!section) return true; // buff tidak aktif
+
+  // Kasus auto-select (hidden input)
+  const hidden = section.querySelector('#exorcist-template-input');
+  if (hidden) {
+    window.exorcistTemplateLabel = hidden.value;
+    return true;
+  }
+
+  // Baca dari card bertanda data-selected
+  const selectedCard = section.querySelector('.exorcist-option-card[data-selected="true"]');
+  if (!selectedCard) return false; // wajib pilih
+
+  window.exorcistTemplateLabel = selectedCard.dataset.label;
+  return true;
 }
 
 // ── RENDER PANEL ──────────────────────────────────────────────
@@ -334,5 +333,7 @@ export default {
   global:       {},
   role_bonus:   {},
   handler,
-  renderPanel: (hero) => renderExorcistPanel(hero), // ← tambah ini
+  renderPanel:   (hero) => renderExorcistPanel(hero),
+  renderInputUI: (container, heroList) => renderInputUI(container, heroList),
+  collectInput:  () => collectInput(),
 };
