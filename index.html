@@ -71,7 +71,7 @@
   flex: 1; padding: 10px; overflow-y: auto;
   min-height: 0;
   background: radial-gradient(circle at center, #1a1f29 0%, #0a0c10 100%);
-  display: flex; justify-content: center;
+  display: flex; justify-content: flex-start;
 }
 
   /* ── SIDEBAR KOMPONEN ── */
@@ -297,6 +297,7 @@
     height: 100%; background: var(--green);
     width: 0%; transition: width .3s;
   }
+  
 </style>
 
 
@@ -305,13 +306,20 @@
   <div class="app-title">⚔ MC Go Go</div>
   <div class="header-btns">
   <button class="hbtn hbtn-green" onclick="bukaModalCari()">🔍 Cari Combo</button>
+  <button class="hbtn hbtn-green" onclick="resetAllBlessing()">🔄 Reset Blessing</button>
   <button class="hbtn hbtn-green" id="btn-capture-grid">📋 Debug Grid</button>
   <button class="hbtn hbtn-green" id="btn-copy-buffs">📊 Copy Buffs</button>
   <!-- taruh setelah btn-copy-buffs atau di mana pun kamu mau -->
-<button class="hbtn hbtn-green" id="btn-toggle-hero-table">📋 Hero Table</button>
+<button class="hbtn hbtn-green" onclick="document.getElementById('hero-table-modal').style.display='flex'">
+  📋 Hero Table
+</button>
   <button class="hbtn hbtn-green" id="btn-export-cache">💾 Export Cache</button>
 <input type="file" id="input-import-cache" accept=".json" style="display:none">
 <button class="hbtn hbtn-green" id="btn-import-cache">📂 Import Cache</button>
+<button class="hbtn hbtn-green" id="btn-clear-cache">🗑 Clear Cache</button>
+<button class="hbtn hbtn-green" onclick="zoomPage(-0.1)">➖</button>
+<span id="zoom-level" style="color:#d4af37; font-family:'Share Tech Mono',monospace; font-size:0.85rem;">100%</span>
+<button class="hbtn hbtn-green" onclick="zoomPage(0.1)">➕</button>
 </div>
 </div>
 
@@ -333,7 +341,7 @@
   </div>
 
 <div class="center-panel">
-<div style="display:flex; gap:8px; width:100%; max-width:1100px;">
+<div style="display:flex; align-items:flex-start; width:100%;">
     
     <!-- Arena + Smart bawah -->
     <div style="display:flex; flex-direction:column; gap:20px; flex:1;">
@@ -356,7 +364,7 @@
     </div>
 
     <!-- Auto Roll (sejajar arena) -->
-    <div id="autoroll-wrap" style="display:flex; flex-direction:column; flex-shrink:0;">
+<div id="autoroll-wrap" style="display:flex; flex-direction:column; flex-shrink:0;">
       <div style="font-family:'Share Tech Mono',monospace; font-size:0.75rem; color:#27ae60; letter-spacing:3px; text-align:center;">◈ AUTO ROLL</div>
       <div id="autoroll-grid"></div>
     </div>
@@ -384,7 +392,15 @@
     <div id="detail-modal-content"></div>
   </div>
 </div>
-
+<script>
+let _zoom = 1;
+function zoomPage(dir) {
+  _zoom = Math.min(2, Math.max(0.5, _zoom + dir));
+  _zoom = Math.round(_zoom * 10) / 10;
+  document.querySelector('.app-body').style.zoom = _zoom;
+  document.getElementById('zoom-level').textContent = Math.round(_zoom * 100) + '%';
+}
+</script>
 
 <!-- ── SCRIPT: HERO LIST & FILTER ── -->
 <script type="module" src="./ui/hero_list.js"></script>

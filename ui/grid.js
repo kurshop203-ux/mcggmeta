@@ -16,6 +16,33 @@ window.GRID_ROWS = GRID_ROWS;
 const slotAssignments = {};
 window.slotAssignments = slotAssignments;
 
+
+function isFirstUnit(entry) {
+  let myKey = null;
+  for (const [k, e] of Object.entries(slotAssignments)) {
+    if (e === entry) { myKey = k; break; }
+  }
+  if (!myKey) return false;
+  const [myRow, myCol] = myKey.split('-').map(Number);
+  for (const [k, e] of Object.entries(slotAssignments)) {
+    if (e.name !== entry.name || e === entry) continue;
+    const [r, c] = k.split('-').map(Number);
+    if (r < myRow || (r === myRow && c < myCol)) return false;
+  }
+  return true;
+}
+
+window.resetAllBlessing = function() {
+  if (!confirm('Reset semua blessing?')) return;
+  Object.values(slotAssignments).forEach(entry => {
+    entry.blessingFraksi = [];
+    entry.blessingRole   = [];
+  });
+  if (typeof window.updateHeroUI === 'function') {
+    window.updateHeroUI(slotAssignments, window.GRID_ROWS, window.ALL_HEROES);
+  }
+};
+
 function buildGlobalGrid() {
   const wrap = document.getElementById('global-grid-wrap');
   if (!wrap) return;
@@ -70,8 +97,6 @@ window.placeHeroInGrid = function(name) {
     for (let c = 0; c < GRID_ROWS[r].count; c++) {
       const key = `${r}-${c}`;
       if (!slotAssignments[key]) {
-        // extraFraksi/extraRole: tambahan sinergi manual yang dipilih
-        // user lewat modal edit. Default kosong (belum ada tambahan).
         slotAssignments[key] = { name, stars: 1, extraFraksi: [], extraRole: [], blessingFraksi: [], blessingRole: [] };
         renderSlot(r, c);
         if (typeof window.updateHeroUI === 'function') {
@@ -90,10 +115,6 @@ function handleSlotClick(rowIndex, colIndex) {
   editHeroModal(rowIndex, colIndex, entry);
 }
 
-// Hitung jumlah hero unik di grid per fraksi/role tertentu.
-// "Unik" di sini per SLOT (bukan per nama), karena dipakai untuk
-// preview cepat saat modal edit dibuka — perhitungan resmi untuk
-// tier sinergi tetap dilakukan di find_combo.js setelah merge.
 function calcSynergy(rowIndex, colIndex, entry) {
   const data = window.ALL_HEROES[entry.name];
   const counts = { fraksi: {}, role: {} };
@@ -101,14 +122,12 @@ function calcSynergy(rowIndex, colIndex, entry) {
   Object.values(slotAssignments).forEach(e => {
     const d = window.ALL_HEROES[e.name];
     if (!d) return;
-    // gabungkan fraksi/role dasar dari database + tambahan manual slot ini
     const fraksiList = [...toArray(d.fraksi), ...toArray(e.extraFraksi)];
     const roleList   = [...toArray(d.role),   ...toArray(e.extraRole)];
     fraksiList.forEach(f => { counts.fraksi[f] = (counts.fraksi[f] || 0) + 1; });
     roleList.forEach(r   => { counts.role[r]   = (counts.role[r]   || 0) + 1; });
   });
 
-  // Fraksi/role milik hero yang sedang diedit (dasar + tambahan slot ini)
   const myFraksi = [...toArray(data.fraksi), ...toArray(entry.extraFraksi)];
   const myRole   = [...toArray(data.role),   ...toArray(entry.extraRole)];
 
@@ -118,9 +137,6 @@ function calcSynergy(rowIndex, colIndex, entry) {
   };
 }
 
-// Daftar semua fraksi/role yang ada di database, dipakai sebagai
-// opsi tambahan di modal edit. Dihitung sekali saat dipanggil
-// (murah karena jumlah hero terbatas).
 function getAllFraksiRoleOptions() {
   const roles = new Set(), fraksis = new Set();
   Object.values(window.ALL_HEROES).forEach(d => {
@@ -135,9 +151,8 @@ function editHeroModal(rowIndex, colIndex, entry) {
   const content = document.getElementById('detail-modal-content');
   const hero    = window.ALL_HEROES[entry.name];
 
-  // Pastikan entry lama (sebelum fitur ini ada) tetap punya field ini
-  if (!entry.extraFraksi)   entry.extraFraksi   = [];
-  if (!entry.extraRole)     entry.extraRole     = [];
+  if (!entry.extraFraksi)    entry.extraFraksi    = [];
+  if (!entry.extraRole)      entry.extraRole      = [];
   if (!entry.blessingFraksi) entry.blessingFraksi = [];
   if (!entry.blessingRole)   entry.blessingRole   = [];
 
@@ -146,19 +161,46 @@ function editHeroModal(rowIndex, colIndex, entry) {
   const baseRole   = toArray(hero.role);
   const { roles: allRoles, fraksis: allFraksis } = getAllFraksiRoleOptions();
 
-  // Opsi tambahan = semua opsi yang ada DIKURANGI yang sudah jadi fraksi/role dasar
   const fraksiOptions = allFraksis.filter(f => !baseFraksi.includes(f));
   const roleOptions   = allRoles.filter(r => !baseRole.includes(r));
 
-  // Opsi blessing = HANYA role/fraksi bawaan hero itu sendiri
   const blessingRoleOptions   = baseRole;
   const blessingFraksiOptions = baseFraksi;
+
+  const canEditBlessing = isFirstUnit(entry) && entry.stars >= 2;
+  const firstUnitLabel  = entry.name + ' a';
 
   const checkboxRow = (value, checked, groupName) => `
     <label style="display:flex; align-items:center; gap:6px; font-size:0.78rem; padding:4px 0; cursor:pointer;">
       <input type="checkbox" data-group="${groupName}" value="${value}" ${checked ? 'checked' : ''} />
       ${value}
     </label>`;
+
+  const blessingSection = canEditBlessing ? `
+    <div style="font-size:0.73rem; color:var(--text-dim); margin-bottom:6px;">
+      Menggandakan kontribusi role/fraksi bawaan hero ini untuk hitung threshold sinergi.
+      1 unit dihitung 2× untuk sinergi tersebut.
+    </div>
+    <div style="font-size:0.78rem; color:var(--text-dim); margin-bottom:4px;">Role:</div>
+    <div id="blessing-role-list" style="display:grid; grid-template-columns:1fr 1fr; gap:2px; margin-bottom:8px;">
+      ${blessingRoleOptions.length
+        ? blessingRoleOptions.map(r => checkboxRow(r, entry.blessingRole.includes(r), 'blessing-role')).join('')
+        : '<div style="color:var(--text-dim); font-size:0.75rem;">Tidak ada role bawaan.</div>'}
+    </div>
+    <div style="font-size:0.78rem; color:var(--text-dim); margin-bottom:4px;">Fraksi:</div>
+    <div id="blessing-fraksi-list" style="display:grid; grid-template-columns:1fr 1fr; gap:2px;">
+      ${blessingFraksiOptions.length
+        ? blessingFraksiOptions.map(f => checkboxRow(f, entry.blessingFraksi.includes(f), 'blessing-fraksi')).join('')
+        : '<div style="color:var(--text-dim); font-size:0.75rem;">Tidak ada fraksi bawaan.</div>'}
+    </div>
+  ` : `
+    <div style="font-size:0.75rem; color:var(--text-dim); font-style:italic;">
+      Blessing diatur dari unit pertama (${firstUnitLabel}).
+      ${entry.blessingFraksi.length || entry.blessingRole.length
+        ? `<br>Aktif: ${[...entry.blessingRole, ...entry.blessingFraksi].join(', ')}`
+        : ''}
+    </div>
+  `;
 
   content.innerHTML = `
     <h3 style="margin-top:0;">${entry.name}</h3>
@@ -176,40 +218,40 @@ function editHeroModal(rowIndex, colIndex, entry) {
     </div>
 
     <div style="margin-top:14px; border-top:1px solid var(--border); padding-top:10px;">
-      <div style="font-size:0.85rem; color:var(--accent); margin-bottom:4px;">✦ Blessing</div>
-      <div style="font-size:0.73rem; color:var(--text-dim); margin-bottom:6px;">
-        Menggandakan kontribusi role/fraksi bawaan hero ini untuk hitung threshold sinergi.
-        1 unit dihitung 2× untuk sinergi tersebut.
+      <div style="font-size:0.85rem; color:var(--accent); margin-bottom:4px; cursor:pointer; user-select:none;"
+           onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+        ▶ Blessing
       </div>
-      <div style="font-size:0.78rem; color:var(--text-dim); margin-bottom:4px;">Role:</div>
-      <div id="blessing-role-list" style="display:grid; grid-template-columns:1fr 1fr; gap:2px; margin-bottom:8px;">
-        ${blessingRoleOptions.length
-          ? blessingRoleOptions.map(r => checkboxRow(r, entry.blessingRole.includes(r), 'blessing-role')).join('')
-          : '<div style="color:var(--text-dim); font-size:0.75rem;">Tidak ada role bawaan.</div>'}
-      </div>
-      <div style="font-size:0.78rem; color:var(--text-dim); margin-bottom:4px;">Fraksi:</div>
-      <div id="blessing-fraksi-list" style="display:grid; grid-template-columns:1fr 1fr; gap:2px;">
-        ${blessingFraksiOptions.length
-          ? blessingFraksiOptions.map(f => checkboxRow(f, entry.blessingFraksi.includes(f), 'blessing-fraksi')).join('')
-          : '<div style="color:var(--text-dim); font-size:0.75rem;">Tidak ada fraksi bawaan.</div>'}
+      <div style="display:none;">
+        ${blessingSection}
       </div>
     </div>
 
     <div style="margin-top:14px; border-top:1px solid var(--border); padding-top:10px;">
-      <div style="font-size:0.85rem; color:var(--accent); margin-bottom:6px;">➕ Tambahan Fraksi</div>
-      <div id="extra-fraksi-list" style="display:grid; grid-template-columns:1fr 1fr; gap:2px;">
-        ${fraksiOptions.length
-          ? fraksiOptions.map(f => checkboxRow(f, entry.extraFraksi.includes(f), 'fraksi')).join('')
-          : '<div style="color:var(--text-dim); font-size:0.75rem;">Tidak ada opsi tambahan tersedia.</div>'}
+      <div style="font-size:0.85rem; color:var(--accent); margin-bottom:6px; cursor:pointer; user-select:none;"
+           onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+        ▶ Tambahan Fraksi
+      </div>
+      <div style="display:none;">
+        <div id="extra-fraksi-list" style="display:grid; grid-template-columns:1fr 1fr; gap:2px;">
+          ${fraksiOptions.length
+            ? fraksiOptions.map(f => checkboxRow(f, entry.extraFraksi.includes(f), 'fraksi')).join('')
+            : '<div style="color:var(--text-dim); font-size:0.75rem;">Tidak ada opsi tambahan tersedia.</div>'}
+        </div>
       </div>
     </div>
 
     <div style="margin-top:10px;">
-      <div style="font-size:0.85rem; color:var(--accent); margin-bottom:6px;">➕ Tambahan Role</div>
-      <div id="extra-role-list" style="display:grid; grid-template-columns:1fr 1fr; gap:2px;">
-        ${roleOptions.length
-          ? roleOptions.map(r => checkboxRow(r, entry.extraRole.includes(r), 'role')).join('')
-          : '<div style="color:var(--text-dim); font-size:0.75rem;">Tidak ada opsi tambahan tersedia.</div>'}
+      <div style="font-size:0.85rem; color:var(--accent); margin-bottom:6px; cursor:pointer; user-select:none;"
+           onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+        ▶ Tambahan Role
+      </div>
+      <div style="display:none;">
+        <div id="extra-role-list" style="display:grid; grid-template-columns:1fr 1fr; gap:2px;">
+          ${roleOptions.length
+            ? roleOptions.map(r => checkboxRow(r, entry.extraRole.includes(r), 'role')).join('')
+            : '<div style="color:var(--text-dim); font-size:0.75rem;">Tidak ada opsi tambahan tersedia.</div>'}
+        </div>
       </div>
     </div>
 
@@ -226,34 +268,32 @@ function editHeroModal(rowIndex, colIndex, entry) {
     };
   });
 
-  // Checkbox tambahan fraksi/role → langsung update entry di slotAssignments.
-  // Tidak perlu tombol "Simpan" terpisah karena entry adalah referensi
-  // langsung ke object di slotAssignments (bukan copy).
-
-  // ── Blessing handlers ─────────────────────────────────────────
-  content.querySelectorAll('#blessing-role-list input[type="checkbox"]').forEach(cb => {
-    cb.onchange = () => {
-      entry.blessingRole = [...content.querySelectorAll('#blessing-role-list input:checked')].map(el => el.value);
-      editHeroModal(rowIndex, colIndex, entry);
-      if (typeof window.updateHeroUI === 'function') {
-        window.updateHeroUI(slotAssignments, window.GRID_ROWS, window.ALL_HEROES);
-      }
-    };
-  });
-  content.querySelectorAll('#blessing-fraksi-list input[type="checkbox"]').forEach(cb => {
-    cb.onchange = () => {
-      entry.blessingFraksi = [...content.querySelectorAll('#blessing-fraksi-list input:checked')].map(el => el.value);
-      editHeroModal(rowIndex, colIndex, entry);
-      if (typeof window.updateHeroUI === 'function') {
-        window.updateHeroUI(slotAssignments, window.GRID_ROWS, window.ALL_HEROES);
-      }
-    };
-  });
+  // ── Blessing handlers — hanya untuk unit pertama ──────────────
+  if (canEditBlessing) {
+    content.querySelectorAll('#blessing-role-list input[type="checkbox"]').forEach(cb => {
+      cb.onchange = () => {
+        entry.blessingRole = [...content.querySelectorAll('#blessing-role-list input:checked')].map(el => el.value);
+        editHeroModal(rowIndex, colIndex, entry);
+        if (typeof window.updateHeroUI === 'function') {
+          window.updateHeroUI(slotAssignments, window.GRID_ROWS, window.ALL_HEROES);
+        }
+      };
+    });
+    content.querySelectorAll('#blessing-fraksi-list input[type="checkbox"]').forEach(cb => {
+      cb.onchange = () => {
+        entry.blessingFraksi = [...content.querySelectorAll('#blessing-fraksi-list input:checked')].map(el => el.value);
+        editHeroModal(rowIndex, colIndex, entry);
+        if (typeof window.updateHeroUI === 'function') {
+          window.updateHeroUI(slotAssignments, window.GRID_ROWS, window.ALL_HEROES);
+        }
+      };
+    });
+  }
 
   content.querySelectorAll('#extra-fraksi-list input[type="checkbox"]').forEach(cb => {
     cb.onchange = () => {
       entry.extraFraksi = [...content.querySelectorAll('#extra-fraksi-list input:checked')].map(el => el.value);
-      editHeroModal(rowIndex, colIndex, entry); // re-render supaya angka sinergi update
+      editHeroModal(rowIndex, colIndex, entry);
       if (typeof window.updateHeroUI === 'function') {
         window.updateHeroUI(slotAssignments, window.GRID_ROWS, window.ALL_HEROES);
       }
@@ -290,8 +330,8 @@ window.captureGrid = function() {
     const [row, col] = key.split('-').map(Number);
     return {
       row, col, name: entry.name, stars: entry.stars,
-      extraFraksi:   entry.extraFraksi   || [],
-      extraRole:     entry.extraRole     || [],
+      extraFraksi:    entry.extraFraksi    || [],
+      extraRole:      entry.extraRole      || [],
       blessingFraksi: entry.blessingFraksi || [],
       blessingRole:   entry.blessingRole   || [],
     };

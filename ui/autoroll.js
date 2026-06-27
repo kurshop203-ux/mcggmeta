@@ -40,14 +40,10 @@ function buildAutoRollGrid() {
   btnJalan1.style.cssText = 'border-color:#27ae60; background:rgba(39,174,96,0.08); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.6rem; color:#27ae60; font-weight:bold; text-align:center; padding:4px;';
   btnJalan1.innerHTML = '🚀<br>Run';
 
-  const btnJalan2 = document.createElement('div');
-  btnJalan2.className = 'grid-slot-placeholder';
-  btnJalan2.style.cssText = 'border-color:#27ae60; background:rgba(39,174,96,0.08); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.6rem; color:#27ae60; font-weight:bold; text-align:center; padding:4px;';
-  btnJalan2.innerHTML = '🚀<br>Run 2';
 
   actionRow.appendChild(btnKosong);
   actionRow.appendChild(btnJalan1);
-  actionRow.appendChild(btnJalan2);
+
   wrap.appendChild(actionRow);
 }
 

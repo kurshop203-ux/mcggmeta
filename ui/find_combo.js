@@ -28,46 +28,77 @@ export function updateHeroUI(slotAssignments, gridRows, ALL_HEROES) {
   renderHeroWajibPicker(heroList);
 }
 export function renderHeroTable(heroList) {
-  let container = document.getElementById('hero-table-wrap');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'hero-table-wrap';
-    container.style.cssText = `
-  width: 100%; max-width: 800px;
-  margin-top: 24px;
-  font-family: 'Share Tech Mono', monospace;
-`;
-container.style.display = 'none';
-    const gridWrap = document.getElementById('global-grid-wrap');
-if (gridWrap) gridWrap.insertAdjacentElement('beforebegin', container);
+  // Buat modal sekali
+  let modal = document.getElementById('hero-table-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'hero-table-modal';
+    modal.style.cssText = `
+      display:none; position:fixed; inset:0; z-index:9999;
+      background:rgba(0,0,0,0.75); align-items:center; justify-content:center;
+    `;
+    modal.innerHTML = `
+      <div style="
+        background:#0f1218; border:1px solid #d4af37; border-radius:10px;
+        width:min(600px,95vw); max-height:80vh; display:flex; flex-direction:column;
+        font-family:'Share Tech Mono',monospace;
+        box-shadow:0 4px 32px rgba(0,0,0,0.6);
+      ">
+        <div style="padding:14px 18px; border-bottom:1px solid #333;
+          display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-family:'Cinzel Decorative',serif; color:#d4af37; font-size:1rem;">◈ DAFTAR HERO DI GRID</span>
+          <button onclick="document.getElementById('hero-table-modal').style.display='none'"
+            style="background:transparent; color:#888; border:1px solid #444; border-radius:4px;
+            padding:4px 12px; cursor:pointer; font-family:'Share Tech Mono',monospace;">✕ Tutup</button>
+        </div>
+        <div id="hero-table-body" style="overflow-y:auto; flex:1; padding:8px 0;"></div>
+      </div>
+    `;
+    modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+    document.body.appendChild(modal);
   }
 
-  if (heroList.length === 0) { container.innerHTML = ''; return; }
+  const body = document.getElementById('hero-table-body');
+  if (heroList.length === 0) { body.innerHTML = ''; return; }
 
   const starsStr = (n) => '★'.repeat(n) + '☆'.repeat(3 - n);
-
-  const rows = heroList.map((h, i) => `
+  const rows = heroList.map((h, i) => {
+  const blessingStr = [
+    ...toArray(h.blessingRole),
+    ...toArray(h.blessingFraksi),
+  ].join(', ');
+  return `
     <tr style="background: ${i % 2 === 0 ? '#1a1f29' : '#141820'}">
       <td style="padding:6px 12px; color:#999;">${h.slot ?? '-'}</td>
       <td style="padding:6px 12px; font-weight:bold;">${h.label ?? h.name}</td>
       <td style="padding:6px 12px; color:#d4af37;">${starsStr(h.stars)}</td>
       <td style="padding:6px 12px; font-size:0.78rem; color:#bbb;">
-        ${toArray(h.role).join(', ') || '-'} • ${toArray(h.fraksi).join(', ') || '-'}
+        <div style="display:flex;flex-wrap:wrap;gap:3px;align-items:center;">
+          ${renderIcons(h.role)}
+          <span style="color:#444;margin:0 2px;">•</span>
+          ${renderIcons(h.fraksi)}
+        </div>
+      </td>
+      <td style="padding:6px 12px; font-size:0.78rem; color:#e91e8c;">
+        <div style="display:flex;flex-wrap:wrap;gap:3px;align-items:center;">
+          ${[...toArray(h.blessingRole), ...toArray(h.blessingFraksi)].length
+            ? renderIcons([...toArray(h.blessingRole), ...toArray(h.blessingFraksi)])
+            : '<span style="color:#444;">-</span>'}
+        </div>
       </td>
     </tr>
-  `).join('');
+  `;
+}).join('');
 
-  container.innerHTML = `
-    <div style="font-family:'Cinzel Decorative',serif; color:#d4af37; font-size:1rem; margin-bottom:10px;">
-      ◈ DAFTAR HERO DI GRID
-    </div>
+  body.innerHTML = `
     <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
       <thead>
-        <tr style="background:#0f1218; color:#d4af37; text-align:left; border-bottom: 1px solid #333;">
+        <tr style="background:#0f1218; color:#d4af37; text-align:left; border-bottom:1px solid #333;">
           <th style="padding:8px 12px;">Slot</th>
           <th style="padding:8px 12px;">Hero</th>
           <th style="padding:8px 12px;">Bintang</th>
           <th style="padding:8px 12px;">Role • Fraksi</th>
+          <th style="padding:8px 12px;">Blessing</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -81,63 +112,60 @@ export function renderHeroWajibPicker(heroList) {
   const container = document.getElementById('hero-wajib-picker');
   if (!container) return;
 
-  container.innerHTML = `
-    <div style="font-size:0.8rem; color:#d4af37; margin-bottom:6px;">
-      ◈ HERO WAJIB (opsional)
-    </div>
-  `;
+  container.innerHTML = `<div style="font-size:0.8rem; color:#d4af37; margin-bottom:6px;">◈ HERO WAJIB (opsional)</div>`;
 
   if (heroList.length === 0) {
-    container.innerHTML += `
-      <div style="font-size:0.75rem; color:#666;">— isi grid dulu —</div>
-    `;
+    container.innerHTML += `<div style="font-size:0.75rem; color:#666;">— isi grid dulu —</div>`;
     return;
   }
 
-  // ── Search box ────────────────────────────────────────────
-  const searchBox = document.createElement('input');
-  searchBox.type = 'text';
-  searchBox.placeholder = '🔍 cari nama / role / fraksi...';
-  searchBox.style.cssText = `
-    width:100%; box-sizing:border-box; margin-bottom:8px;
-    background:#1a1f29; color:#d4af37; border:1px solid #333;
-    border-radius:4px; padding:5px 8px;
-    font-family:'Share Tech Mono',monospace; font-size:0.78rem;
-  `;
-  container.appendChild(searchBox);
+  const grid = document.createElement('div');
+  grid.style.cssText = 'display:flex; flex-wrap:wrap; gap:6px;';
+  container.appendChild(grid);
 
-  // ── Wrapper list (biar gampang di-filter terpisah dari search box) ──
-  const listWrap = document.createElement('div');
-  container.appendChild(listWrap);
-
-  // Sort alfabetis biar predictable
   const sorted = [...heroList].sort((a, b) =>
     (a.label ?? a.name).localeCompare(b.label ?? b.name)
   );
 
   sorted.forEach(hero => {
     const stars = '★'.repeat(hero.stars) + '☆'.repeat(3 - hero.stars);
-    const roleStr  = toArray(hero.role).join(', ');
-    const fraksiStr = toArray(hero.fraksi).join(', ');
-    const searchKey = `${hero.label ?? hero.name} ${roleStr} ${fraksiStr}`.toLowerCase();
-
-    const row = document.createElement('label');
-    row.dataset.searchKey = searchKey;
-    row.style.cssText = `
-      display:flex; align-items:center; gap:8px;
-      padding:4px 6px; cursor:pointer; font-size:0.8rem;
-      border-radius:4px; margin-bottom:2px;
+    const card = document.createElement('div');
+    card.style.cssText = `
+      width:52px; height:52px; border-radius:6px; cursor:pointer;
+      border:2px dashed rgba(255,255,255,0.15); position:relative;
+      overflow:hidden; transition:all 0.2s; flex-shrink:0;
     `;
-    row.innerHTML = `
-      <input type="checkbox" style="accent-color:#d4af37;">
-      <span>${hero.label ?? hero.name}</span>
-      <span style="color:#d4af37; font-size:0.7rem;">${stars}</span>
-      <span style="color:#666; font-size:0.7rem;">${roleStr} • ${fraksiStr}</span>
+   const roleStr      = toArray(hero.role).join(', ')          || '-';
+const fraksiStr    = toArray(hero.fraksi).join(', ')        || '-';
+const extraRole    = toArray(hero.roleExtra).join(', ');
+const extraFraksi  = toArray(hero.fraksiExtra).join(', ');
+const blessRole    = toArray(hero.blessingRole).join(', ');
+const blessFraksi  = toArray(hero.blessingFraksi).join(', ');
+
+card.title = [
+  `${hero.label ?? hero.name} ${stars}`,
+  `Role: ${roleStr}`,
+  `Fraksi: ${fraksiStr}`,
+  extraRole    ? `Extra Role: ${extraRole}`       : '',
+  extraFraksi  ? `Extra Fraksi: ${extraFraksi}`   : '',
+  blessRole    ? `Blessing Role: ${blessRole}`     : '',
+  blessFraksi  ? `Blessing Fraksi: ${blessFraksi}` : '',
+].filter(v => v).join('\n');
+    card.innerHTML = `
+      <img src="${window.heroImagePath(hero.name)}" 
+           style="width:100%;height:100%;object-fit:cover;display:block;"
+           onerror="this.style.display='none'">
+      <div style="position:absolute;bottom:0;left:0;right:0;
+        background:rgba(0,0,0,0.6);font-size:0.5rem;color:#d4af37;
+        text-align:center;padding:1px 0;">${stars}</div>
     `;
 
-    row.querySelector('input').addEventListener('change', (e) => {
-      row.style.background = e.target.checked ? '#2a2510' : '';
-      if (e.target.checked) {
+    let selected = false;
+    card.onclick = () => {
+      selected = !selected;
+      card.style.border = selected ? '2px solid #d4af37' : '2px dashed rgba(255,255,255,0.15)';
+      card.style.boxShadow = selected ? '0 0 8px rgba(212,175,55,0.5)' : '';
+      if (selected) {
         heroWajibDipilih.push(hero);
       } else {
         heroWajibDipilih = heroWajibDipilih.filter(
@@ -146,17 +174,9 @@ export function renderHeroWajibPicker(heroList) {
       }
       const el = document.getElementById('wajib-count');
       if (el) el.textContent = `${heroWajibDipilih.length} hero wajib dipilih`;
-    });
+    };
 
-    listWrap.appendChild(row);
-  });
-
-  // ── Filter logic ──────────────────────────────────────────
-  searchBox.addEventListener('input', () => {
-    const q = searchBox.value.trim().toLowerCase();
-    listWrap.querySelectorAll('label').forEach(row => {
-      row.style.display = row.dataset.searchKey.includes(q) ? 'flex' : 'none';
-    });
+    grid.appendChild(card);
   });
 }
 function bukaModalCari() {
@@ -543,6 +563,19 @@ function toArray(v) {
   if (v === undefined || v === null) return [];
   return Array.isArray(v) ? v : [v];
 }
+function buffImagePath(name) {
+  return `./data/buffs/images/${name}.webp`;
+}
+function renderIcons(arr, opts = {}) {
+  const { size = 20, dimmed = false } = opts;
+  return toArray(arr).map(name => `
+    <img src="${buffImagePath(name)}" alt="${name}" title="${name}"
+      style="width:${size}px;height:${size}px;object-fit:cover;border-radius:3px;
+        ${dimmed ? 'opacity:0.4;' : ''}vertical-align:middle;"
+      onerror="this.outerHTML='<span style=&quot;font-size:0.7rem;color:#888;&quot;>${name}</span>'"
+    />
+  `).join('');
+}
 // ── UI: SIDEBAR ───────────────────────────────────────────────
 function getHeroImagePath(name) {
   return window.heroImagePath(name);
@@ -611,9 +644,23 @@ const hasSinergy = [
       <div style="font-weight:bold; font-size:0.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
         ${hero.label ?? hero.name}
       </div>
-      <div style="font-size:0.7rem; color:#999; font-family:'Share Tech Mono',monospace;">
-        ${stars} · ${toArray(hero.role).join(', ') || '-'}
+      <div style="font-size:0.7rem; color:#999; font-family:'Share Tech Mono',monospace; display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+        ${stars} · ${renderIcons(hero.role, { size: 16 }) || '-'}
+        <span style="color:#444;">•</span>
+        ${renderIcons(hero.fraksi, { size: 16 }) || '-'}
       </div>
+      ${(toArray(hero.roleExtra).length || toArray(hero.fraksiExtra).length) ? `
+      <div style="display:flex; align-items:center; gap:3px; flex-wrap:wrap; margin-top:2px;">
+        <span style="font-size:0.65rem; color:#555;">+</span>
+        ${renderIcons(hero.roleExtra, { size: 14 })}
+        ${renderIcons(hero.fraksiExtra, { size: 14 })}
+      </div>` : ''}
+      ${(toArray(hero.blessingRole).length || toArray(hero.blessingFraksi).length) ? `
+      <div style="display:flex; align-items:center; gap:3px; flex-wrap:wrap; margin-top:2px;">
+        <span style="font-size:0.65rem; color:#e91e8c;">✦</span>
+        ${renderIcons(hero.blessingRole, { size: 14 })}
+        ${renderIcons(hero.blessingFraksi, { size: 14 })}
+      </div>` : ''}
     </div>
     <div style="font-size:0.7rem; color:#d4af37;">▶</div>
   </div>

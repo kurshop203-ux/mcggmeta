@@ -58,15 +58,30 @@ export function combine_heroes_then_prepare_a_list_of_heroes_that_have_been_merg
     const extrasBySlot    = {};
     const blessingsBySlot = {};
     entries.forEach(e => {
-      extrasBySlot[e.slot]    = { extraFraksi: e.extraFraksi, extraRole: e.extraRole };
-      blessingsBySlot[e.slot] = { blessingFraksi: e.blessingFraksi, blessingRole: e.blessingRole };
-    });
-    const getExtras = slots => ({
-      extraFraksi:    unionArrays(...slots.map(s => extrasBySlot[s]?.extraFraksi)),
-      extraRole:      unionArrays(...slots.map(s => extrasBySlot[s]?.extraRole)),
-      blessingFraksi: unionArrays(...slots.map(s => blessingsBySlot[s]?.blessingFraksi)),
-      blessingRole:   unionArrays(...slots.map(s => blessingsBySlot[s]?.blessingRole)),
-    });
+  extrasBySlot[e.slot] = { extraFraksi: e.extraFraksi, extraRole: e.extraRole };
+  if (e.stars === 1) {
+    // ★1 tidak bisa punya blessing — dikosongkan paksa
+    // tapi kalau dia merge jadi ★2/★3, blessing dari slot ★2 tetap ikut via getExtras
+    blessingsBySlot[e.slot] = { blessingFraksi: [], blessingRole: [] };
+  } else {
+    // ★2/★3: ambil blessing dari slot, fallback ke storage kalau kosong
+    const stored = window.__blessingStorage?.[name] ?? {};
+    blessingsBySlot[e.slot] = {
+      blessingFraksi: e.blessingFraksi?.length ? e.blessingFraksi : (stored.blessingFraksi ?? []),
+      blessingRole:   e.blessingRole?.length   ? e.blessingRole   : (stored.blessingRole   ?? []),
+    };
+  }
+});
+const getExtras = slots => {
+  const sortedSlots = [...slots].sort((a, b) => a - b);
+  const firstSlot   = sortedSlots[0];
+  return {
+    extraFraksi:    unionArrays(...slots.map(s => extrasBySlot[s]?.extraFraksi)),
+    extraRole:      unionArrays(...slots.map(s => extrasBySlot[s]?.extraRole)),
+    blessingFraksi: toArray(blessingsBySlot[firstSlot]?.blessingFraksi),
+    blessingRole:   toArray(blessingsBySlot[firstSlot]?.blessingRole),
+  };
+};
 
     // Pisahkan slot clean vs extra
     const hasExtra = slot => {
@@ -257,7 +272,38 @@ export function combine_heroes_then_prepare_a_list_of_heroes_that_have_been_merg
 //  convert hasilnya ke JSON → salin ke clipboard
 export async function captureGridToClipboard(slotAssignments, gridRows) {
   const data = combine_heroes_then_prepare_a_list_of_heroes_that_have_been_merged(slotAssignments, gridRows);
-  const json = JSON.stringify(data, null, 2);
+
+  // ── DEBUG: intermediate merge state per nama hero ──
+  const debug = {};
+  const filled = [];
+  if (gridRows) {
+    let globalIndex = 0;
+    gridRows.forEach((rowInfo, rowIndex) => {
+      for (let c = 0; c < rowInfo.count; c++) {
+        globalIndex++;
+        const key = `${rowIndex}-${c}`;
+        const entry = slotAssignments[key];
+        if (entry) filled.push({ slot: globalIndex, name: entry.name, stars: entry.stars, extraFraksi: entry.extraFraksi || [], extraRole: entry.extraRole || [] });
+      }
+    });
+  }
+  const byName = {};
+  filled.forEach(item => {
+    if (!byName[item.name]) byName[item.name] = [];
+    byName[item.name].push(item);
+  });
+  const hasExtra = (e) => (e.extraFraksi?.length > 0) || (e.extraRole?.length > 0);
+  Object.entries(byName).forEach(([name, entries]) => {
+    const b1s_clean     = entries.filter(e => e.stars === 1 && !hasExtra(e)).map(e => e.slot);
+    const b1s_extra     = entries.filter(e => e.stars === 1 &&  hasExtra(e)).map(e => e.slot);
+    const realB2s_clean = entries.filter(e => e.stars === 2 && !hasExtra(e)).map(e => e.slot);
+    const realB2s_extra = entries.filter(e => e.stars === 2 &&  hasExtra(e)).map(e => e.slot);
+    const realB3s       = entries.filter(e => e.stars === 3).map(e => e.slot);
+    debug[name] = { b1s_clean, b1s_extra, realB2s_clean, realB2s_extra, realB3s };
+  });
+
+  const output = { data, __debug: debug };
+  const json = JSON.stringify(output, null, 2);
   try {
     await navigator.clipboard.writeText(json);
     return { success: true, data, json };
