@@ -1,5 +1,5 @@
 import { captureGridToClipboard, get_the_hero_list_from_the_merged_grid } from '../engine/capture.js';
-import { updateHeroUI }  from './find_combo.js';
+import { updateHeroUI, renderHeroTable }  from './find_combo.js';
 import { applyAllBuffs } from '../engine/buff_engine.js';
 
 function refreshTable() {
@@ -71,6 +71,16 @@ document.getElementById('btn-copy-buffs').addEventListener('click', async () => 
 
 // ── Tombol: Toggle Hero Table ──
 document.getElementById('btn-toggle-hero-table').addEventListener('click', () => {
+  // Buat modal on-demand kalau belum ada
+  if (!document.getElementById('hero-table-modal')) {
+    renderHeroTable(
+      get_the_hero_list_from_the_merged_grid(
+        window.slotAssignments,
+        window.GRID_ROWS,
+        window.ALL_HEROES
+      )
+    );
+  }
   const modal = document.getElementById('hero-table-modal');
   if (!modal) return;
   modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
