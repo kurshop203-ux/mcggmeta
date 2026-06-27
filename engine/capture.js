@@ -60,45 +60,114 @@ export function combine_heroes_then_prepare_a_list_of_heroes_that_have_been_merg
       extraRole:   unionArrays(...slots.map(s => extrasBySlot[s]?.extraRole)),
     });
 
-    const b1s = entries.filter(e => e.stars === 1).map(e => e.slot);
-    const realB2s = entries.filter(e => e.stars === 2).map(e => e.slot);
+    // Pisahkan slot clean vs extra
+    const hasExtra = slot => {
+      const e = extrasBySlot[slot];
+      return (e?.extraFraksi?.length > 0) || (e?.extraRole?.length > 0);
+    };
+
+    // Helper: ambil group 3 dari 2 antrian (clean & extra), max 1 extra per group
+    function drainGroups(cleanQ, extraQ) {
+      const groups = [];
+      while (true) {
+        const total = cleanQ.length + extraQ.length;
+        if (total < 3) break;
+        if (cleanQ.length < 2) break; // butuh min 2 clean agar max 1 extra per group
+        // Ambil 2 clean dulu
+        const group = [cleanQ.shift(), cleanQ.shift()];
+        // Slot ke-3: utamakan extra dulu, baru clean
+        if (extraQ.length > 0) {
+          group.push(extraQ.shift());
+        } else if (cleanQ.length > 0) {
+          group.push(cleanQ.shift());
+        } else {
+          // tidak ada slot ke-3 (harusnya tidak terjadi karena total >= 3)
+          cleanQ.unshift(group[1]); cleanQ.unshift(group[0]);
+          break;
+        }
+        groups.push(group);
+      }
+      return groups;
+    }
+
+    const b1s_clean = entries.filter(e => e.stars === 1 && !hasExtra(e.slot)).map(e => e.slot);
+    const b1s_extra = entries.filter(e => e.stars === 1 &&  hasExtra(e.slot)).map(e => e.slot);
+    const realB2s_clean = entries.filter(e => e.stars === 2 && !hasExtra(e.slot)).map(e => e.slot);
+    const realB2s_extra = entries.filter(e => e.stars === 2 &&  hasExtra(e.slot)).map(e => e.slot);
     const realB3s = entries.filter(e => e.stars === 3).map(e => e.slot);
 
-    // Tahap 1: tiap 3x ★1 -> 1 sim ★2
-    const simB2Groups = []; // each: array of source slots
-    let b1Queue = [...b1s];
-    while (b1Queue.length >= 3) {
-      simB2Groups.push(b1Queue.splice(0, 3));
-    }
-    const leftoverB1 = b1Queue; // sisa ★1 yang tidak cukup untuk merge
+    // Tahap 1: tiap 3x ★1 (max 1 extra per group) -> 1 sim ★2
+    let b1_clean_q = [...b1s_clean];
+    let b1_extra_q = [...b1s_extra];
+    const simB2Groups = drainGroups(b1_clean_q, b1_extra_q);
 
-    // Tahap 2: gabungkan real ★2 + sim ★2 (dari tahap 1), tiap 3 -> 1 ★3
-    const allB2Slots = [
-      ...realB2s.map(slot => [slot]),       // real ★2: sourceSlots = [slot sendiri]
-      ...simB2Groups,                        // sim ★2: sourceSlots = 3 slot ★1 asal
+    // Pisahkan sim ★2 yang mengandung extra vs pure clean
+    const simB2_clean = simB2Groups.filter(g => !g.some(s => hasExtra(s)));
+    const simB2_extra = simB2Groups.filter(g =>  g.some(s => hasExtra(s)));
+
+    // Tahap 2: gabungkan real ★2 + sim ★2, tiap 3 (max 1 extra per group) -> 1 ★3
+    const b2_clean_q = [
+      ...realB2s_clean.map(slot => [slot]),
+      ...simB2_clean,
     ];
-    let b2Queue = [...allB2Slots];
-    while (b2Queue.length >= 3) {
-      const group = b2Queue.splice(0, 3);
-      const allSources = group.flat();
+    const b2_extra_q = [
+      ...realB2s_extra.map(slot => [slot]),
+      ...simB2_extra,
+    ];
+
+    // drainGroups bekerja pada array of slots, bungkus agar kompatibel
+    // (tiap elemen di queue adalah array of source slots, bukan slot tunggal)
+    function drainB2Groups(cleanQ, extraQ) {
+      const groups = [];
+      while (true) {
+        const total = cleanQ.length + extraQ.length;
+        if (total < 3) break;
+        if (cleanQ.length < 2) break;
+        const group = [cleanQ.shift(), cleanQ.shift()];
+        if (extraQ.length > 0) {
+          group.push(extraQ.shift());
+        } else if (cleanQ.length > 0) {
+          group.push(cleanQ.shift());
+        } else {
+          cleanQ.unshift(group[1]); cleanQ.unshift(group[0]);
+          break;
+        }
+        groups.push(group);
+      }
+      return groups;
+    }
+
+    const b2MergeGroups = drainB2Groups(b2_clean_q, b2_extra_q);
+
+    b2MergeGroups.forEach(group => {
+      const allSources = group.flat().sort((a, b) => a - b);
       const memberUnit = {};
       allSources.forEach((slot, i) => {
         memberUnit[`SLOT ${slot}`] = `A${i + 1}`;
       });
       result.push({ slot: allSources.join('/'), name, stars: 3, member_unit: memberUnit, ...getExtras(allSources) });
-    }
-    const leftoverB2Groups = b2Queue; // sisa kelompok ★2 (real atau sim) yang tidak cukup utk ★3
+    });
 
-    // Sisa ★2 (real/sim) yang belum sempat jadi ★3
-    leftoverB2Groups.forEach(group => {
+    // Sisa ★2 (clean/sim) yang tidak cukup untuk merge jadi ★3
+    b2_clean_q.forEach(group => {
+      const allSources = group.flat().sort((a, b) => a - b);
       let memberUnit = null;
-      if (group.length > 1) {
+      if (allSources.length > 1) {
         memberUnit = {};
-        group.forEach((slot, i) => {
-          memberUnit[`SLOT ${slot}`] = `A${i + 1}`;
-        });
+        allSources.forEach((slot, i) => { memberUnit[`SLOT ${slot}`] = `A${i + 1}`; });
       }
-      result.push({ slot: group.join('/'), name, stars: 2, member_unit: memberUnit, ...getExtras(group) });
+      result.push({ slot: allSources.join('/'), name, stars: 2, member_unit: memberUnit, ...getExtras(allSources) });
+    });
+
+    // Sisa ★2 extra yang tidak sempat merge
+    b2_extra_q.forEach(group => {
+      const allSources = group.flat().sort((a, b) => a - b);
+      let memberUnit = null;
+      if (allSources.length > 1) {
+        memberUnit = {};
+        allSources.forEach((slot, i) => { memberUnit[`SLOT ${slot}`] = `A${i + 1}`; });
+      }
+      result.push({ slot: allSources.join('/'), name, stars: 2, member_unit: memberUnit, ...getExtras(allSources) });
     });
 
     // Real ★3 yang sudah ada sejak awal
@@ -106,8 +175,13 @@ export function combine_heroes_then_prepare_a_list_of_heroes_that_have_been_merg
       result.push({ slot: String(slot), name, stars: 3, member_unit: null, ...getExtras([slot]) });
     });
 
-    // Sisa ★1 yang tidak cukup untuk digabung
-    leftoverB1.forEach(slot => {
+    // Sisa ★1 clean yang tidak cukup untuk merge
+    b1_clean_q.forEach(slot => {
+      result.push({ slot: String(slot), name, stars: 1, member_unit: null, ...getExtras([slot]) });
+    });
+
+    // Sisa ★1 extra yang tidak sempat merge
+    b1_extra_q.forEach(slot => {
       result.push({ slot: String(slot), name, stars: 1, member_unit: null, ...getExtras([slot]) });
     });
   });

@@ -37,7 +37,7 @@ import Northern_Vale   from './Northern_Vale.js';
 // ── EXPORT ───────────────────────────────────────────────────────
 
 const BUFF_LIST = [
-  AstroPower, Northern_Vale, Bruiser, Dauntless, Defender, Dragoncaller, Enchanted_Tales, Exorcist, Kishin,
+  AstroPower, Exorcist, Northern_Vale, Bruiser, Dauntless, Defender, Dragoncaller, Enchanted_Tales, Kishin,
   Mage, Marksman, Neobeasts, Phasewarper, Scavenger, Stargazer, Swiftblade, Weapon_Master, Heartbond, Emberlord
 ];
 

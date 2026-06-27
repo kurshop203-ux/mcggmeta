@@ -74,6 +74,9 @@ window.placeHeroInGrid = function(name) {
         // user lewat modal edit. Default kosong (belum ada tambahan).
         slotAssignments[key] = { name, stars: 1, extraFraksi: [], extraRole: [] };
         renderSlot(r, c);
+        if (typeof window.updateHeroUI === 'function') {
+          window.updateHeroUI(slotAssignments, window.GRID_ROWS, window.ALL_HEROES);
+        }
         return;
       }
     }
@@ -191,6 +194,9 @@ function editHeroModal(rowIndex, colIndex, entry) {
       entry.stars = parseInt(btn.dataset.star);
       renderSlot(rowIndex, colIndex);
       editHeroModal(rowIndex, colIndex, entry);
+      if (typeof window.updateHeroUI === 'function') {
+        window.updateHeroUI(slotAssignments, window.GRID_ROWS, window.ALL_HEROES);
+      }
     };
   });
 
@@ -201,12 +207,18 @@ function editHeroModal(rowIndex, colIndex, entry) {
     cb.onchange = () => {
       entry.extraFraksi = [...content.querySelectorAll('#extra-fraksi-list input:checked')].map(el => el.value);
       editHeroModal(rowIndex, colIndex, entry); // re-render supaya angka sinergi update
+      if (typeof window.updateHeroUI === 'function') {
+        window.updateHeroUI(slotAssignments, window.GRID_ROWS, window.ALL_HEROES);
+      }
     };
   });
   content.querySelectorAll('#extra-role-list input[type="checkbox"]').forEach(cb => {
     cb.onchange = () => {
       entry.extraRole = [...content.querySelectorAll('#extra-role-list input:checked')].map(el => el.value);
       editHeroModal(rowIndex, colIndex, entry);
+      if (typeof window.updateHeroUI === 'function') {
+        window.updateHeroUI(slotAssignments, window.GRID_ROWS, window.ALL_HEROES);
+      }
     };
   });
 
@@ -214,6 +226,9 @@ function editHeroModal(rowIndex, colIndex, entry) {
     delete slotAssignments[`${rowIndex}-${colIndex}`];
     renderSlot(rowIndex, colIndex);
     closeDetailModal();
+    if (typeof window.updateHeroUI === 'function') {
+      window.updateHeroUI(slotAssignments, window.GRID_ROWS, window.ALL_HEROES);
+    }
   };
 
   modal.style.display = 'flex';
