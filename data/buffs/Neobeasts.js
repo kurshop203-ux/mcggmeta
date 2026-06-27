@@ -67,11 +67,13 @@ function handler({ heroList, qualifying, tierIndex }) {
 
 // ── INLINE INPUT UI ───────────────────────────────────────────
 export function renderInputUI(container, heroList) {
-  const uniqueCount = new Set(
-    heroList
-      .filter(h => toArray(h.fraksi).includes('Neobeasts'))
-      .map(h => h.name)
-  ).size;
+  const directNames   = new Set(
+    heroList.filter(h => toArray(h.fraksi).includes('Neobeasts')).map(h => h.name)
+  );
+  const blessingBonus = heroList.filter(h =>
+    toArray(h.blessingFraksi).includes('Neobeasts')
+  ).length;
+  const uniqueCount   = directNames.size + blessingBonus;
 
   const tierIndex = getActiveTierIndex(uniqueCount, THRESHOLDS);
   if (tierIndex === -1) return; // buff tidak aktif, tidak inject apapun

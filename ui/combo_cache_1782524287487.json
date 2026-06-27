@@ -1,0 +1,79 @@
+[
+  [
+    "Alpha|1|9d7f10d7|Emberlord",
+    {
+      "damageTotal": 10174.5,
+      "sustainTotal": 4075
+    }
+  ],
+  [
+    "Alpha|1|c283dd83|Emberlord",
+    {
+      "damageTotal": 10174.5,
+      "sustainTotal": 4075
+    }
+  ],
+  [
+    "Aurora|1|18854e2f|Astro Power",
+    {
+      "damageTotal": 8492.25,
+      "sustainTotal": 3524.61
+    }
+  ],
+  [
+    "Badang|1|a3012176|Dragoncaller",
+    {
+      "damageTotal": 12000,
+      "sustainTotal": 4075
+    }
+  ],
+  [
+    "Bane|1|9b19b164|Northern Vale",
+    {
+      "damageTotal": 7967.2,
+      "sustainTotal": 4335
+    }
+  ],
+  [
+    "Belerick|1|e6c8113a|Enchanted Tales",
+    {
+      "damageTotal": 6630,
+      "sustainTotal": 3238.4
+    }
+  ],
+  [
+    "Claude|1|674a9604|Heartbond",
+    {
+      "damageTotal": 17365.89,
+      "sustainTotal": 2620.8
+    }
+  ],
+  [
+    "Claude|1|c283dd83|Heartbond",
+    {
+      "damageTotal": 16538.5,
+      "sustainTotal": 2496
+    }
+  ],
+  [
+    "Lancelot|1|9b1d2273|Phasewarper,Kishin",
+    {
+      "damageTotal": 12856.8,
+      "sustainTotal": 5501.25
+    }
+  ],
+  [
+    "Ling|1|bb0b75ed|Swiftblade,Neobeasts",
+    {
+      "damageTotal": 8000,
+      "sustainTotal": 3670
+    }
+  ],
+  [
+    "Ruby|1|b525c9cb|Exorcist",
+    {
+      "damageTotal": 7672.8,
+      "sustainTotal": 4985.25
+    }
+  ]
+]

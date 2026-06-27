@@ -82,8 +82,21 @@ function handler({ heroList, qualifying, tierIndex }) {
 
 // ── INLINE INPUT UI ───────────────────────────────────────────
 export function renderInputUI(container, heroList) {
-  const qualifying  = heroList.filter(h => toArray(h.fraksi).includes('Astro Power'));
-  const uniqueCount = new Set(qualifying.map(h => h.name)).size;
+  // qualifying: hero yang punya fraksi Astro Power secara langsung ATAU via blessing
+  const qualifying  = heroList.filter(h =>
+    toArray(h.fraksi).includes('Astro Power') ||
+    toArray(h.blessingFraksi).includes('Astro Power')
+  );
+  // uniqueCount: tiap hero blessing menambah +1 (sama seperti logika buff_engine)
+  const directNames = new Set(
+    heroList
+      .filter(h => toArray(h.fraksi).includes('Astro Power'))
+      .map(h => h.name)
+  );
+  const blessingBonus = heroList.filter(h =>
+    toArray(h.blessingFraksi).includes('Astro Power')
+  ).length;
+  const uniqueCount = directNames.size + blessingBonus;
   const tierIndex   = getActiveTierIndex(uniqueCount, THRESHOLDS);
   if (tierIndex === -1) return;
 

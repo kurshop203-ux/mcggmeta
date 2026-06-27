@@ -56,7 +56,7 @@ function handler({ heroList, qualifying, tierIndex }) {
   qualifying.forEach(hero => { hero.heartbond_tier = tierIndex + 1; });
 
 const unitDenganSkor = qualifying.map(hero => {
-    const cached    = getScoreSync(buildCacheKey(hero));
+    const cached    = getScoreSync(hero._prevPhaseKey ?? buildCacheKey(hero));
     const totalSkor = cached ? (cached.damageTotal + cached.sustainTotal) : 0;
     hero.heartbond_total_skor = totalSkor;
     return { hero, totalSkor };

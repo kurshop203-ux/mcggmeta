@@ -31,8 +31,19 @@ function applyOneBuff(buffName, buffData, heroList) {
   });
 
   const uniqueNames = new Set(qualifying.map(h => h.name));
-  const count       = uniqueNames.size;
+  let count         = uniqueNames.size;
   if (count === 0) return;
+
+  // Bonus count dari hero yang punya blessing matching role/fraksi ini.
+  // Setiap hero yang me-blessing targetRole/targetFraksi menambah +1 ke count,
+  // terlepas dari apakah hero itu sudah masuk qualifying atau tidak.
+  // Ini yang membuat 1 unit Frangko bisa dihitung 2× kalau di-blessing Weapon Master.
+  heroList.forEach(hero => {
+    const blessingRole   = Array.isArray(hero.blessingRole)   ? hero.blessingRole   : [];
+    const blessingFraksi = Array.isArray(hero.blessingFraksi) ? hero.blessingFraksi : [];
+    if (targetRole   && blessingRole.includes(targetRole))     count++;
+    if (targetFraksi && blessingFraksi.includes(targetFraksi)) count++;
+  });
 
   const tierIndex = getActiveTierIndex(count, thresholds);
   if (tierIndex === -1) return;

@@ -20,8 +20,10 @@ export function combine_heroes_then_prepare_a_list_of_heroes_that_have_been_merg
         const entry = slotAssignments[key];
         if (entry) filled.push({
           slot: globalIndex, name: entry.name, stars: entry.stars,
-          extraFraksi: entry.extraFraksi || [],
-          extraRole:   entry.extraRole   || [],
+          extraFraksi:    entry.extraFraksi    || [],
+          extraRole:      entry.extraRole      || [],
+          blessingFraksi: entry.blessingFraksi || [],
+          blessingRole:   entry.blessingRole   || [],
         });
       }
     });
@@ -30,8 +32,10 @@ export function combine_heroes_then_prepare_a_list_of_heroes_that_have_been_merg
       const [row, col] = key.split('-').map(Number);
       filled.push({
         slot: `${row}-${col}`, name: entry.name, stars: entry.stars,
-        extraFraksi: entry.extraFraksi || [],
-        extraRole:   entry.extraRole   || [],
+        extraFraksi:    entry.extraFraksi    || [],
+        extraRole:      entry.extraRole      || [],
+        blessingFraksi: entry.blessingFraksi || [],
+        blessingRole:   entry.blessingRole   || [],
       });
     });
   }
@@ -43,21 +47,25 @@ export function combine_heroes_then_prepare_a_list_of_heroes_that_have_been_merg
     byName[item.name].push({
       slot: item.slot, stars: item.stars,
       extraFraksi: item.extraFraksi, extraRole: item.extraRole,
+      blessingFraksi: item.blessingFraksi, blessingRole: item.blessingRole,
     });
   });
 
   const result = [];
 
   Object.entries(byName).forEach(([name, entries]) => {
-    // Map slot → extras, untuk lookup balik saat slot sudah diringkas
-    // jadi angka saja di b1s/realB2s/realB3s.
-    const extrasBySlot = {};
+    // Map slot → extras & blessings, untuk lookup balik saat slot sudah diringkas
+    const extrasBySlot    = {};
+    const blessingsBySlot = {};
     entries.forEach(e => {
-      extrasBySlot[e.slot] = { extraFraksi: e.extraFraksi, extraRole: e.extraRole };
+      extrasBySlot[e.slot]    = { extraFraksi: e.extraFraksi, extraRole: e.extraRole };
+      blessingsBySlot[e.slot] = { blessingFraksi: e.blessingFraksi, blessingRole: e.blessingRole };
     });
     const getExtras = slots => ({
-      extraFraksi: unionArrays(...slots.map(s => extrasBySlot[s]?.extraFraksi)),
-      extraRole:   unionArrays(...slots.map(s => extrasBySlot[s]?.extraRole)),
+      extraFraksi:    unionArrays(...slots.map(s => extrasBySlot[s]?.extraFraksi)),
+      extraRole:      unionArrays(...slots.map(s => extrasBySlot[s]?.extraRole)),
+      blessingFraksi: unionArrays(...slots.map(s => blessingsBySlot[s]?.blessingFraksi)),
+      blessingRole:   unionArrays(...slots.map(s => blessingsBySlot[s]?.blessingRole)),
     });
 
     // Pisahkan slot clean vs extra
@@ -273,15 +281,21 @@ export function get_the_hero_list_from_the_merged_grid(slotAssignments, gridRows
       // Simpan extra terpisah supaya autoFillSmartPlacement bisa tahu mana yang dipilih user
       const fraksiExtra = toArray(item.extraFraksi);
       const roleExtra   = toArray(item.extraRole);
+      // Blessing: TIDAK di-union ke fraksi/role — disimpan terpisah
+      // supaya buff_engine bisa hitung bonus count tersendiri.
+      const blessingFraksi = toArray(item.blessingFraksi);
+      const blessingRole   = toArray(item.blessingRole);
       return {
         name:   item.name,
         stars:  item.stars,
         label:  item.label,
-        slot:   item.slot,  // dibutuhkan highlightComboSlots
+        slot:   item.slot,
         fraksi: fraksi.length ? fraksi : null,
         role:   role.length ? role : null,
-        fraksiExtra: fraksiExtra.length ? fraksiExtra : null,  // null kalau tidak ada extra
-        roleExtra:   roleExtra.length   ? roleExtra   : null,  // null kalau tidak ada extra
+        fraksiExtra:    fraksiExtra.length    ? fraksiExtra    : null,
+        roleExtra:      roleExtra.length      ? roleExtra      : null,
+        blessingFraksi: blessingFraksi.length ? blessingFraksi : null,
+        blessingRole:   blessingRole.length   ? blessingRole   : null,
       };
     });
 }

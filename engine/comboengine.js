@@ -3,9 +3,9 @@
 // Engine pencarian kombinasi hero terbaik — full enumerate C(n, k).
 // ════════════════════════════════════════════════════════════════
 
-import { applyAllBuffs }                                      from './buff_engine.js';
+import { applyAllBuffs, applyAllBuffsPhase1, applyEmberlordBuff, applyHeartbondBuff } from './buff_engine.js';
 import { simulateBattle }                                     from './simulate_battle.js';
-import { buildCacheKey, getScore, setScore, setDebug, getAllL1Entries } from '../cache/cache_manager.js';
+import { buildCacheKey, getScore, getScoreSync, setScore, setDebug, getAllL1Entries, hashString } from '../cache/cache_manager.js';
 import { computeScoreTotals, shouldSkipCache }                from './score_utils.js';
 
 // ── HELPER: deep clone heroList ───────────────────────────────────
@@ -17,9 +17,19 @@ function cloneHeroList(heroList) {
     buffs:            {},
     buffLog:          [],
     scheduled_events: h.scheduled_events ? [...h.scheduled_events] : [],
+    blessingFraksi:   Array.isArray(h.blessingFraksi) ? [...h.blessingFraksi] : [],
+    blessingRole:     Array.isArray(h.blessingRole)   ? [...h.blessingRole]   : [],
   }));
 }
-
+////////////////
+function buildEmberlordTeamHash(heroList) {
+  const units = heroList
+    .filter(h => { const f = Array.isArray(h.fraksi) ? h.fraksi : [h.fraksi]; return f.includes('Emberlord'); })
+    .map(h => `${h.name}|${h.stars}|${h.label}`)
+    .sort()
+    .join(',');
+  return hashString(units);
+}
 // ── GENERATE SEMUA KOMBINASI C(arr, k) ───────────────────────────
 function generateCombinations(arr, k) {
   const result = [];
@@ -40,15 +50,62 @@ function generateCombinations(arr, k) {
 // ════════════════════════════════════════════════════════════════
 
 // ── HELPER: simulasi penuh (buff + battle) untuk satu set hero ──────────────
+// Ikuti alur fase yang sama dengan combo_worker.js agar cache key konsisten.
+// _finalCacheKey disimpan di hero supaya getCacheComparison bisa baca langsung.
 function _simulasiFinal(rawKombo, heroWajib, ALL_HEROES) {
   const heroList = cloneHeroList([...heroWajib, ...rawKombo]);
-  applyAllBuffs(heroList);
+
+  function toArr(v) { return Array.isArray(v) ? v : v ? [v] : []; }
+  // Ikuti logika applyOneBuff: qualifying unik + bonus dari blessing
+  function countFraksi(list, nama) {
+    const unik = new Set(list.filter(h => toArr(h.fraksi).includes(nama)).map(h => h.name)).size;
+    if (unik === 0) return 0;
+    const blessingBonus = list.reduce((n, h) => n + (toArr(h.blessingFraksi).includes(nama) ? 1 : 0), 0);
+    return unik + blessingBonus;
+  }
+
+// Fase 1
+applyAllBuffsPhase1(heroList);
+heroList.forEach(hero => {
+  const k = buildCacheKey(hero, 'fase1');
+  hero._prevPhaseKey  = k;
+  hero._finalCacheKey = k;
+  hero._phaseKeys = [k]; // ← init
+});
+
+// Fase 2: Heartbond
+if (countFraksi(heroList, 'Heartbond') >= 2) {
+  applyHeartbondBuff(heroList);
+  heroList.forEach(hero => {
+    const k = buildCacheKey(hero, 'fase2');
+    hero._prevPhaseKey  = k;
+    hero._finalCacheKey = k;
+    hero._phaseKeys.push(k); // ← tambah
+  });
+}
+
+// Fase 3: Emberlord
+if (countFraksi(heroList, 'Emberlord') >= 2) {
+  applyEmberlordBuff(heroList);
+  const teamHash = buildEmberlordTeamHash(heroList); // ← tambah ini
+  heroList.forEach(hero => {
+    const k = buildCacheKey(hero, 'fase3', teamHash); // ← tambah teamHash
+    hero._prevPhaseKey  = k;
+    hero._finalCacheKey = k;
+    hero._phaseKeys.push(k);
+  });
+}
+
   const simResults = {};
   heroList.forEach(hero => {
     const baseData = ALL_HEROES[hero.name];
     if (!baseData) return;
-    const sim    = simulateBattle(hero, baseData);
-    const totals = computeScoreTotals(sim);
+    const sim = simulateBattle(hero, baseData);
+    // Override damageTotal/sustainTotal dengan nilai dari cache fase terakhir jika ada.
+    // Worker menyimpan hasil simulasi 40 detik penuh, sedangkan simulateBattle di sini
+    // bisa terpotong oleh waktu kematian Emberlord → nilai tidak konsisten tanpa ini.
+    const cachedTotals = hero._finalCacheKey ? getScoreSync(hero._finalCacheKey) : null;
+    const totals = cachedTotals ?? computeScoreTotals(sim);
     sim.damageTotal  = totals.damageTotal;
     sim.sustainTotal = totals.sustainTotal;
     simResults[hero.label ?? hero.name] = sim;
@@ -366,30 +423,70 @@ function _runWorker(kombinasi, heroWajib, ALL_HEROES, scoreMode, l1Data, globalS
 
 // ════════════════════════════════════════════════════════════════
 // CEK INTEGRITAS CACHE
+//
+// getCacheComparison() — bandingkan nilai cache fase terakhir
+// vs simulasi MURNI (tanpa pakai cache) untuk hero yang sama.
+//
+// Kenapa tidak bandingkan vs simResults dari _simulasiFinal:
+// _simulasiFinal sekarang override damageTotal/sustainTotal dari cache,
+// sehingga selalu MATCH — tidak berguna untuk validasi.
+// Solusi: hitung ulang skor dari simulateBattle langsung, tanpa cache.
 // ════════════════════════════════════════════════════════════════
-export async function verifyCacheIntegrity(selectedHeroes, simResults) {
-  const mismatches = [];
+export async function getCacheComparison(selectedHeroes, simResults) {
+  const comparison = [];
 
   for (const hero of selectedHeroes) {
-    if (shouldSkipCache(hero)) continue;
+    const label = hero.label ?? hero.name;
+    if (!hero) continue;
 
-    const sim = simResults[hero.label ?? hero.name];
-    if (!sim) continue;
-
-    const cacheKey = buildCacheKey(hero);
-    const cached   = await getScore(cacheKey);
-
-    if (cached === null) {
-      mismatches.push({ hero, cacheKey, cached: null, final: sim, reason: 'MISS' });
+    if (shouldSkipCache(hero)) {
+      const sim = simResults[label];
+      comparison.push({ hero, label, cacheKey: null, cached: null, final: sim ?? null, status: 'SKIP' });
       continue;
     }
 
-    const dmgSelisih = Math.abs(cached.damageTotal  - sim.damageTotal);
-    const susSelisih = Math.abs(cached.sustainTotal - sim.sustainTotal);
-    if (dmgSelisih >= 1 || susSelisih >= 1) {
-      mismatches.push({ hero, cacheKey, cached, final: sim, reason: 'MISMATCH' });
+    const cacheKey = hero._finalCacheKey ?? buildCacheKey(hero, 'fase1');
+    const cached   = await getScore(cacheKey);
+
+    // Hitung skor murni dari simulateBattle — tanpa override dari cache
+    const baseData = window.ALL_HEROES?.[hero.name];
+    let pureTotal = null;
+    if (baseData) {
+      const pureSim = simulateBattle(hero, baseData);
+      pureTotal = computeScoreTotals(pureSim);
     }
+
+ let status;
+    if (cached === null) {
+      status = 'MISS';
+    } else if (pureTotal === null) {
+      status = 'SKIP';
+    } else {
+      const dmgSelisih = Math.abs(cached.damageTotal  - pureTotal.damageTotal);
+      const susSelisih = Math.abs(cached.sustainTotal - pureTotal.sustainTotal);
+      status = (dmgSelisih >= 1 || susSelisih >= 1) ? 'MISMATCH' : 'MATCH';
+    }
+
+    const phases = (hero._phaseKeys ?? [hero._finalCacheKey ?? buildCacheKey(hero, 'fase1')])
+      .map(pKey => ({
+        phase:    (pKey ?? '').split('|').pop() || 'fase1',
+        cacheKey: pKey,
+        cached:   pKey ? getScoreSync(pKey) : null,
+      }));
+
+    comparison.push({
+      hero, label, cacheKey, cached,
+      final: pureTotal ?? simResults[label] ?? null,
+      status,
+      phases,
+    });
   }
 
-  return mismatches;
+  return comparison;
+}
+export async function verifyCacheIntegrity(selectedHeroes, simResults) {
+  const comparison = await getCacheComparison(selectedHeroes, simResults);
+  return comparison
+    .filter(c => c.status === 'MISS' || c.status === 'MISMATCH')
+    .map(c => ({ hero: c.hero, cacheKey: c.cacheKey, cached: c.cached, final: c.final, reason: c.status }));
 }

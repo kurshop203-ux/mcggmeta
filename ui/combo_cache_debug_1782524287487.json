@@ -1,0 +1,429 @@
+[
+  [
+    "Alpha|1|9d7f10d7|Emberlord",
+    {
+      "name": "Alpha",
+      "stars": 1,
+      "role": [
+        "Weapon Master"
+      ],
+      "fraksi": [
+        "Emberlord"
+      ],
+      "buff_active": {
+        "Swiftblade": {},
+        "Weapon_Master": {},
+        "Bruiser": {},
+        "Dauntless": {},
+        "Defender": {},
+        "Mage": {},
+        "Marksman": {},
+        "Stargazer": {},
+        "Phasewarper": {},
+        "Scavenger": {},
+        "AstroPower": {},
+        "Dragoncaller": {},
+        "Emberlord": {
+          "type": "fraksi",
+          "active": true,
+          "tier": 1,
+          "buff_diterima": []
+        },
+        "Enchanted_Tales": {},
+        "Exorcist": {},
+        "Heartbond": {},
+        "Kishin": {},
+        "Neobeasts": {},
+        "Northern_Vale": {}
+      }
+    }
+  ],
+  [
+    "Alpha|1|c283dd83|Emberlord",
+    {
+      "name": "Alpha",
+      "stars": 1,
+      "role": [
+        "Weapon Master"
+      ],
+      "fraksi": [
+        "Emberlord"
+      ],
+      "buff_active": {
+        "Swiftblade": {},
+        "Weapon_Master": {},
+        "Bruiser": {},
+        "Dauntless": {},
+        "Defender": {},
+        "Mage": {},
+        "Marksman": {},
+        "Stargazer": {},
+        "Phasewarper": {},
+        "Scavenger": {},
+        "AstroPower": {},
+        "Dragoncaller": {},
+        "Emberlord": {},
+        "Enchanted_Tales": {},
+        "Exorcist": {},
+        "Heartbond": {},
+        "Kishin": {},
+        "Neobeasts": {},
+        "Northern_Vale": {}
+      }
+    }
+  ],
+  [
+    "Aurora|1|18854e2f|Astro Power",
+    {
+      "name": "Aurora",
+      "stars": 1,
+      "role": [
+        "Stargazer"
+      ],
+      "fraksi": [
+        "Astro Power"
+      ],
+      "buff_active": {
+        "Swiftblade": {},
+        "Weapon_Master": {},
+        "Bruiser": {},
+        "Dauntless": {},
+        "Defender": {},
+        "Mage": {},
+        "Marksman": {},
+        "Stargazer": {},
+        "Phasewarper": {},
+        "Scavenger": {},
+        "AstroPower": {
+          "type": "fraksi",
+          "active": true,
+          "tier": 1,
+          "sovereign_active": true
+        },
+        "Dragoncaller": {},
+        "Emberlord": {},
+        "Enchanted_Tales": {},
+        "Exorcist": {},
+        "Heartbond": {},
+        "Kishin": {},
+        "Neobeasts": {},
+        "Northern_Vale": {}
+      }
+    }
+  ],
+  [
+    "Badang|1|a3012176|Dragoncaller",
+    {
+      "name": "Badang",
+      "stars": 1,
+      "role": [
+        "Bruiser"
+      ],
+      "fraksi": [
+        "Dragoncaller"
+      ],
+      "buff_active": {
+        "Swiftblade": {},
+        "Weapon_Master": {},
+        "Bruiser": {},
+        "Dauntless": {},
+        "Defender": {},
+        "Mage": {},
+        "Marksman": {},
+        "Stargazer": {},
+        "Phasewarper": {},
+        "Scavenger": {},
+        "AstroPower": {},
+        "Dragoncaller": {
+          "type": "fraksi",
+          "active": true,
+          "tier": 1,
+          "unit": 1,
+          "level": 3
+        },
+        "Emberlord": {},
+        "Enchanted_Tales": {},
+        "Exorcist": {},
+        "Heartbond": {},
+        "Kishin": {},
+        "Neobeasts": {},
+        "Northern_Vale": {}
+      }
+    }
+  ],
+  [
+    "Bane|1|9b19b164|Northern Vale",
+    {
+      "name": "Bane",
+      "stars": 1,
+      "role": [
+        "Defender"
+      ],
+      "fraksi": [
+        "Northern Vale"
+      ],
+      "buff_active": {
+        "Swiftblade": {},
+        "Weapon_Master": {},
+        "Bruiser": {},
+        "Dauntless": {},
+        "Defender": {},
+        "Mage": {},
+        "Marksman": {},
+        "Stargazer": {},
+        "Phasewarper": {},
+        "Scavenger": {},
+        "AstroPower": {},
+        "Dragoncaller": {},
+        "Emberlord": {},
+        "Enchanted_Tales": {},
+        "Exorcist": {},
+        "Heartbond": {},
+        "Kishin": {},
+        "Neobeasts": {},
+        "Northern_Vale": {
+          "type": "fraksi",
+          "active": true,
+          "tier": 1
+        }
+      }
+    }
+  ],
+  [
+    "Belerick|1|e6c8113a|Enchanted Tales",
+    {
+      "name": "Belerick",
+      "stars": 1,
+      "role": [
+        "Bruiser"
+      ],
+      "fraksi": [
+        "Enchanted Tales"
+      ],
+      "buff_active": {
+        "Swiftblade": {},
+        "Weapon_Master": {},
+        "Bruiser": {},
+        "Dauntless": {},
+        "Defender": {},
+        "Mage": {},
+        "Marksman": {},
+        "Stargazer": {},
+        "Phasewarper": {},
+        "Scavenger": {},
+        "AstroPower": {},
+        "Dragoncaller": {},
+        "Emberlord": {},
+        "Enchanted_Tales": {
+          "type": "fraksi",
+          "active": true,
+          "tier": 1,
+          "poin": 0
+        },
+        "Exorcist": {},
+        "Heartbond": {},
+        "Kishin": {},
+        "Neobeasts": {},
+        "Northern_Vale": {}
+      }
+    }
+  ],
+  [
+    "Claude|1|674a9604|Heartbond",
+    {
+      "name": "Claude",
+      "stars": 1,
+      "role": [
+        "Scavenger"
+      ],
+      "fraksi": [
+        "Heartbond"
+      ],
+      "buff_active": {
+        "Swiftblade": {},
+        "Weapon_Master": {},
+        "Bruiser": {},
+        "Dauntless": {},
+        "Defender": {},
+        "Mage": {},
+        "Marksman": {},
+        "Stargazer": {},
+        "Phasewarper": {},
+        "Scavenger": {},
+        "AstroPower": {},
+        "Dragoncaller": {},
+        "Emberlord": {},
+        "Enchanted_Tales": {},
+        "Exorcist": {},
+        "Heartbond": {
+          "type": "fraksi",
+          "active": true,
+          "tier": 1,
+          "paired": false
+        },
+        "Kishin": {},
+        "Neobeasts": {},
+        "Northern_Vale": {}
+      }
+    }
+  ],
+  [
+    "Claude|1|c283dd83|Heartbond",
+    {
+      "name": "Claude",
+      "stars": 1,
+      "role": [
+        "Scavenger"
+      ],
+      "fraksi": [
+        "Heartbond"
+      ],
+      "buff_active": {
+        "Swiftblade": {},
+        "Weapon_Master": {},
+        "Bruiser": {},
+        "Dauntless": {},
+        "Defender": {},
+        "Mage": {},
+        "Marksman": {},
+        "Stargazer": {},
+        "Phasewarper": {},
+        "Scavenger": {},
+        "AstroPower": {},
+        "Dragoncaller": {},
+        "Emberlord": {},
+        "Enchanted_Tales": {},
+        "Exorcist": {},
+        "Heartbond": {},
+        "Kishin": {},
+        "Neobeasts": {},
+        "Northern_Vale": {}
+      }
+    }
+  ],
+  [
+    "Lancelot|1|9b1d2273|Phasewarper,Kishin",
+    {
+      "name": "Lancelot",
+      "stars": 1,
+      "role": [
+        "Phasewarper"
+      ],
+      "fraksi": [
+        "Kishin"
+      ],
+      "buff_active": {
+        "Swiftblade": {},
+        "Weapon_Master": {},
+        "Bruiser": {},
+        "Dauntless": {},
+        "Defender": {},
+        "Mage": {},
+        "Marksman": {},
+        "Stargazer": {},
+        "Phasewarper": {
+          "type": "role",
+          "active": true,
+          "tier": 1
+        },
+        "Scavenger": {},
+        "AstroPower": {},
+        "Dragoncaller": {},
+        "Emberlord": {},
+        "Enchanted_Tales": {},
+        "Exorcist": {},
+        "Heartbond": {},
+        "Kishin": {
+          "type": "fraksi",
+          "active": true,
+          "tier": 1
+        },
+        "Neobeasts": {},
+        "Northern_Vale": {}
+      }
+    }
+  ],
+  [
+    "Ling|1|bb0b75ed|Swiftblade,Neobeasts",
+    {
+      "name": "Ling",
+      "stars": 1,
+      "role": [
+        "Swiftblade"
+      ],
+      "fraksi": [
+        "Neobeasts"
+      ],
+      "buff_active": {
+        "Swiftblade": {
+          "type": "role",
+          "active": true,
+          "tier": 1
+        },
+        "Weapon_Master": {},
+        "Bruiser": {},
+        "Dauntless": {},
+        "Defender": {},
+        "Mage": {},
+        "Marksman": {},
+        "Stargazer": {},
+        "Phasewarper": {},
+        "Scavenger": {},
+        "AstroPower": {},
+        "Dragoncaller": {},
+        "Emberlord": {},
+        "Enchanted_Tales": {},
+        "Exorcist": {},
+        "Heartbond": {},
+        "Kishin": {},
+        "Neobeasts": {
+          "type": "fraksi",
+          "active": true,
+          "tier": 1,
+          "poin": 0
+        },
+        "Northern_Vale": {}
+      }
+    }
+  ],
+  [
+    "Ruby|1|b525c9cb|Exorcist",
+    {
+      "name": "Ruby",
+      "stars": 1,
+      "role": [
+        "Dauntless"
+      ],
+      "fraksi": [
+        "Exorcist"
+      ],
+      "buff_active": {
+        "Swiftblade": {},
+        "Weapon_Master": {},
+        "Bruiser": {},
+        "Dauntless": {},
+        "Defender": {},
+        "Mage": {},
+        "Marksman": {},
+        "Stargazer": {},
+        "Phasewarper": {},
+        "Scavenger": {},
+        "AstroPower": {},
+        "Dragoncaller": {},
+        "Emberlord": {},
+        "Enchanted_Tales": {},
+        "Exorcist": {
+          "type": "fraksi",
+          "active": true,
+          "tier": 1,
+          "unit": 1,
+          "phantom_template": true
+        },
+        "Heartbond": {},
+        "Kishin": {},
+        "Neobeasts": {},
+        "Northern_Vale": {}
+      }
+    }
+  ]
+]

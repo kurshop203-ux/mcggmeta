@@ -140,9 +140,20 @@ const phantomMagDmg  = skillMagTotal  * phantomDmgMultiplier * jumlahUnit;
 
 // ── INLINE INPUT UI ───────────────────────────────────────────
 export function renderInputUI(container, heroList) {
-  const qualifying  = heroList.filter(h => toArray(h.fraksi).includes('Exorcist'));
-  const uniqueCount = new Set(qualifying.map(h => h.name)).size;
-  const tierIndex   = getActiveTierIndex(uniqueCount, THRESHOLDS);
+  // qualifying: hero Exorcist asli ATAU via blessing — untuk render kartu pilihan
+  const qualifying    = heroList.filter(h =>
+    toArray(h.fraksi).includes('Exorcist') ||
+    toArray(h.blessingFraksi).includes('Exorcist')
+  );
+  // uniqueCount: logika sama seperti buff_engine (direct deduplikasi + blessing flat +1)
+  const directNames   = new Set(
+    heroList.filter(h => toArray(h.fraksi).includes('Exorcist')).map(h => h.name)
+  );
+  const blessingBonus = heroList.filter(h =>
+    toArray(h.blessingFraksi).includes('Exorcist')
+  ).length;
+  const uniqueCount   = directNames.size + blessingBonus;
+  const tierIndex     = getActiveTierIndex(uniqueCount, THRESHOLDS);
   if (tierIndex === -1) return;
 
   const accentColor    = '#4a90d9';

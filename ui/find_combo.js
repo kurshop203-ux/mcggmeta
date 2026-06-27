@@ -1,9 +1,9 @@
 import { get_the_hero_list_from_the_merged_grid } from '../engine/capture.js';
 import { simulateBattle }                          from '../engine/simulate_battle.js';
 import { renderSimulationHTML }                    from './render_simulation.js';
-import { runComboEngine, verifyCacheIntegrity, cancelComboEngine } from '../engine/comboengine.js';
+import { runComboEngine, verifyCacheIntegrity, cancelComboEngine, getCacheComparison } from '../engine/comboengine.js';
 import { DATABASE_BUFF }                           from '../data/buffs/database_buff.js';
-import { initCache, buildCacheKey }                from '../cache/cache_manager.js';
+import { initCache }                                from '../cache/cache_manager.js';
 import {
   showWorkerDetailButton,
   startWorkerDetailLive,
@@ -222,6 +222,11 @@ function bukaModalCari() {
             border-radius:4px; padding:6px 16px; cursor:pointer;
             font-family:'Share Tech Mono',monospace; font-size:0.85rem;
           ">Tutup</button>
+          <button onclick="showCacheKeyDebug()" style="
+            background:transparent; color:#3498db; border:1px solid #3498db;
+            border-radius:4px; padding:6px 14px; cursor:pointer;
+            font-family:'Share Tech Mono',monospace; font-size:0.85rem;
+          ">🔑 Cek Cache Key</button>
           <button onclick="jalankanCari()" style="
             background:#d4af37; color:#0f1218; border:none;
             border-radius:4px; padding:6px 16px; cursor:pointer;
@@ -399,6 +404,10 @@ showCancelButton();
     renderScoreList(comboResult.selectedHeroes, comboResult.simResults);
     highlightComboSlots(comboResult.selectedHeroes);
 
+    // Simpan supaya showCacheKeyDebug() bisa bandingin "cache saat cari kombo"
+    // vs "final pas disimulasi ulang" pakai data run yang sama persis.
+    window.__lastComboResult = comboResult;
+
     verifyCacheIntegrity(comboResult.selectedHeroes, comboResult.simResults)
       .then(mismatches => {
         if (mismatches.length === 0) return;
@@ -448,6 +457,86 @@ function notifyCacheIntegrityIssue(mismatches) {
     ⚠ Cache tidak akurat untuk ${mismatches.length} hero.<br>
     Kemungkinan ada bug di buildCacheKey / profil buff.<br>
     Detail lengkap ada di console (F12).
+  `;
+}
+// ── DEBUG: VS — cache yang dipakai SAAT cari kombo vs final pas disimulasi ulang ──
+// Pakai window.__lastComboResult (diisi di CARI()) supaya hero yang dicek
+// adalah hero yang sama persis dengan yang baru selesai di-scoring,
+// bukan heroList mentah dari grid (yang buffnya belum diterapkan).
+async function showCacheKeyDebug() {
+  const lastResult = window.__lastComboResult;
+  if (!lastResult) {
+    alert('Belum ada hasil combo. Jalankan 🔍 Cari dulu, baru cek cache key-nya.');
+    return;
+  }
+
+  const comparison = await getCacheComparison(lastResult.selectedHeroes, lastResult.simResults);
+  if (comparison.length === 0) {
+    alert('Tidak ada hero untuk dibandingkan.');
+    return;
+  }
+
+  console.log('[Cache VS Debug]', comparison);
+  renderCacheKeyDebugBanner(comparison);
+}
+window.showCacheKeyDebug = showCacheKeyDebug;
+
+function renderCacheKeyDebugBanner(comparison) {
+  let banner = document.getElementById('cache-key-debug-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'cache-key-debug-banner';
+    banner.style.cssText = `
+      position: fixed; bottom: 16px; right: 16px; z-index: 9999;
+      background: #14202a; border: 1px solid #3498db; border-radius: 6px;
+      color: #aed6f1; font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem; padding: 10px 14px; max-width: 420px;
+      max-height: 320px; overflow-y: auto;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.4); cursor: pointer;
+    `;
+    banner.title = 'Klik untuk tutup';
+    banner.onclick = () => banner.remove();
+    document.body.appendChild(banner);
+  }
+
+  const STATUS_COLOR = {
+    MATCH:    '#27ae60',
+    MISMATCH: '#e74c3c',
+    MISS:     '#e67e22',
+    SKIP:     '#666',
+  };
+  const fmt = n => Math.round(n).toLocaleString('id-ID');
+
+  const matchCount = comparison.filter(c => c.status === 'MATCH').length;
+
+  banner.innerHTML = `
+    <div style="color:#3498db; margin-bottom:8px;">
+      🔑 VS Cache: Saat Cari Kombo ↔ Final Resim (${matchCount}/${comparison.length} match)
+    </div>
+    ${comparison.map(({ label, cacheKey, cached, final, status, phases }) => `
+      <div style="margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid #233;">
+        <div>
+          <span style="color:${STATUS_COLOR[status]};">●</span>
+          <span style="color:#fff; font-weight:bold;">${label}</span>
+          <span style="color:${STATUS_COLOR[status]};">[${status}]</span>
+        </div>
+        ${phases && phases.length > 0
+          ? phases.map(({ phase, cacheKey: pKey, cached: pCached }) => `
+            <div style="margin-top:4px; padding-left:8px; border-left:2px solid #2c3e50;">
+              <div style="color:#f39c12; font-size:0.66rem;">[${phase}]</div>
+              <div style="color:#85c1e9; word-break:break-all; font-size:0.68rem;">${pKey}</div>
+              <div style="color:#bbb; font-size:0.72rem;">
+                ⚔ ${pCached ? fmt(pCached.damageTotal) : '-'} · 🛡 ${pCached ? fmt(pCached.sustainTotal) : '-'}
+              </div>
+            </div>
+          `).join('')
+          : `<div style="color:#85c1e9; word-break:break-all; font-size:0.68rem; margin:2px 0;">${cacheKey ?? '— (skip cache)'}</div>`
+        }
+        <div style="color:#bbb; margin-top:4px;">
+          Final resim: ⚔ ${fmt(final.damageTotal)} · 🛡 ${fmt(final.sustainTotal)}
+        </div>
+      </div>
+    `).join('')}
   `;
 }
 function toArray(v) {

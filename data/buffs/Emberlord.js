@@ -58,7 +58,7 @@ const unitDenganStats = qualifying.map(hero => {
     const baseData = (typeof window !== 'undefined' ? window : globalThis).ALL_HEROES?.[hero.name];
     if (!baseData) return { hero, finalStats: null, totalValue: 0 };
     // Ranking pakai cache fase 1 — no calculateFinalStats untuk urutan kematian
-    const cached     = getScoreSync(buildCacheKey(hero));
+    const cached     = getScoreSync(hero._prevPhaseKey ?? buildCacheKey(hero));
     const totalValue = cached ? (cached.damageTotal + cached.sustainTotal) : 0;
     // calculateFinalStats tetap dibutuhkan untuk hitung nilai buff kematian
     const hasil = calculateFinalStats(hero, baseData);

@@ -1,5 +1,5 @@
 const DB_NAME      = 'combo_cache';
-const DB_VERSION   = 2;
+const DB_VERSION   = 3;
 const STORE_META   = 'meta';
 const STORE_SCORES = 'sim_scores';
 const STORE_DEBUG  = 'sim_debug';
@@ -101,8 +101,8 @@ export function buildBuffActive(hero) {
     return Array.isArray(v) ? v : [v];
   }
 
-  const heroRoles   = new Set(toArray(hero.role));
-  const heroFraksi  = new Set(toArray(hero.fraksi));
+  const heroRoles   = new Set([...toArray(hero.role),   ...toArray(hero.blessingRole)]);
+  const heroFraksi  = new Set([...toArray(hero.fraksi),  ...toArray(hero.blessingFraksi)]);
   const log         = hero.buffLog ?? [];
 
   function isActiveInLog(buffKey) {
@@ -199,10 +199,8 @@ export function buildBuffActive(hero) {
         break;
       }
       case 'Emberlord':
-  entry.buff_diterima = (hero.emberlord_buff_diterima ?? []).map(b => ({
-    stat: b.stat,
-    value: b.value,
-  }));
+  // buff_diterima TIDAK dimasukkan ke hash — nilainya bergantung pada urutan
+  // kematian run tertentu dan hanya dipakai UI panel, bukan penentu state simulasi.
   break;
       case 'Heartbond':
         entry.paired = hero.heartbond_status === 'paired';
@@ -223,10 +221,14 @@ export function buildBuffActive(hero) {
 }
 
 // ── PUBLIC ────────────────────────────────────────────────────────
-export function buildCacheKey(hero) {
+export function buildCacheKey(hero, phase = '', teamHash = '') { /////////////////////////
   const buffActive     = buildBuffActive(hero);
   const buffActiveHash = hashString(stableStringify(buffActive));
-  return [hero.name, hero.stars ?? 1, buffActiveHash].join('|');
+  const blessingStr = [
+    ...(Array.isArray(hero.blessingRole)   ? hero.blessingRole.slice().sort()   : []),
+    ...(Array.isArray(hero.blessingFraksi) ? hero.blessingFraksi.slice().sort() : []),
+  ].join(',');
+  return [hero.name, hero.stars ?? 1, buffActiveHash, blessingStr, phase, teamHash].filter(v => v !== '').join('|'); ////////
 }
 
 export async function initCache(DATABASE_BUFF, ALL_HEROES) {
@@ -289,6 +291,11 @@ export async function clearCache() {
     await idbClear(STORE_SCORES);
     await idbClear(STORE_DEBUG);
   }
+  console.info('[cache] cleared');
+}
+
+if (typeof window !== 'undefined') {
+  window.__clearCache = clearCache;
 }
 
 export function isDbReady() { return _db !== null; }
