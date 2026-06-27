@@ -71,7 +71,7 @@ document.getElementById('btn-copy-buffs').addEventListener('click', async () => 
 
 // ── Tombol: Toggle Hero Table ──
 document.getElementById('btn-toggle-hero-table').addEventListener('click', () => {
-  const table = document.getElementById('hero-table-wrap');
-  if (!table) return;
-  table.style.display = table.style.display === 'none' ? '' : 'none';
+  const modal = document.getElementById('hero-table-modal');
+  if (!modal) return;
+  modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
 });
