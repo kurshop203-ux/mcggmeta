@@ -1,5 +1,5 @@
 import { captureGridToClipboard, get_the_hero_list_from_the_merged_grid } from '../engine/capture.js';
-import { updateHeroUI, renderHeroTable }  from './find_combo.js';
+import { updateHeroUI, renderHeroTable }  from './combo_input.js';
 import { applyAllBuffs } from '../engine/buff_engine.js';
 
 function refreshTable() {
@@ -22,8 +22,6 @@ new MutationObserver(() => refreshTable()).observe(
   document.getElementById('global-grid-wrap'),
   { subtree: true, childList: true, characterData: true, attributes: true }
 );
-
-
 
 // ── Tombol: Capture Grid ──
 document.getElementById('btn-capture-grid').addEventListener('click', async () => {

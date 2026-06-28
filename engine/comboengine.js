@@ -8,7 +8,8 @@ import { simulateBattle }                                     from './simulate_b
 import { buildCacheKey, getScore, getScoreSync, setScore, setDebug, getAllL1Entries, hashString } from '../cache/cache_manager.js';
 import { computeScoreTotals, shouldSkipCache }                from './score_utils.js';
 
-// ── HELPER: deep clone heroList ───────────────────────────────────
+//Setiap kombinasi hero dicoba "di ruang terpisah" supaya efek buff dari percobaan sebelumnya tidak bocor ke percobaan berikutnya.
+//Kayak nyoba resep masakan — tiap percobaan pakai bahan baru, bukan sisa bahan yang sudah dimasak sebelumnya
 function cloneHeroList(heroList) {
   return heroList.map(h => ({
     ...h,
@@ -104,8 +105,9 @@ if (countFraksi(heroList, 'Emberlord') >= 2) {
     // Override damageTotal/sustainTotal dengan nilai dari cache fase terakhir jika ada.
     // Worker menyimpan hasil simulasi 40 detik penuh, sedangkan simulateBattle di sini
     // bisa terpotong oleh waktu kematian Emberlord → nilai tidak konsisten tanpa ini.
-    const cachedTotals = hero._finalCacheKey ? getScoreSync(hero._finalCacheKey) : null;
-    const totals = cachedTotals ?? computeScoreTotals(sim);
+    //const cachedTotals = hero._finalCacheKey ? getScoreSync(hero._finalCacheKey) : null;
+    //const totals = cachedTotals ?? computeScoreTotals(sim);
+    const totals = computeScoreTotals(sim);   // ← cache di-skip total, selalu hitung manual
     sim.damageTotal  = totals.damageTotal;
     sim.sustainTotal = totals.sustainTotal;
     simResults[hero.label ?? hero.name] = sim;

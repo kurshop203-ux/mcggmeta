@@ -105,7 +105,7 @@ const unitDenganStats = qualifying.map(hero => {
     const magATKSaatMati  = (fs.Magic_ATK    || 0) + flatDiterima[indexMati].Magic_ATK_Flat;
     const buffPhysATK     = physATKSaatMati * bonusPersen;
     const buffMagATK      = magATKSaatMati  * bonusPersen;
-    const heal            = (fs.HP           || 0) * HEAL_PERSEN;
+    const heal = Math.round((fs.HP || 0) * HEAL_PERSEN);
 
     // Catat buff_diberikan untuk UI panel unit yang mati
     unitMati.hero.emberlord_buff_diberikan.push(

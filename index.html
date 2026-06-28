@@ -301,87 +301,63 @@
 </style>
 
 
-<!-- ── HEADER ── -->
 <div class="app-header">
   <div class="app-title">⚔ MC Go Go</div>
   <div class="header-btns">
-  <button class="hbtn hbtn-green" onclick="bukaModalCari()">🔍 Cari Combo</button>
-  <button class="hbtn hbtn-green" id="btn-capture-grid">📋 Debug Grid</button>
-  <button class="hbtn hbtn-green" id="btn-copy-buffs">📊 Copy Buffs</button>
-  <!-- taruh setelah btn-copy-buffs atau di mana pun kamu mau -->
-<button class="hbtn hbtn-green" id="btn-toggle-hero-table">
-  📋 Hero Table
-</button>
-  <button class="hbtn hbtn-green" id="btn-export-cache">💾 Export Cache</button>
-<input type="file" id="input-import-cache" accept=".json" style="display:none">
-<button class="hbtn hbtn-green" id="btn-import-cache">📂 Import Cache</button>
-<button class="hbtn hbtn-green" id="btn-clear-cache">🗑 Clear Cache</button>
-<button class="hbtn hbtn-green" onclick="zoomPage(-0.1)">➖</button>
-<span id="zoom-level" style="color:#d4af37; font-family:'Share Tech Mono',monospace; font-size:0.85rem;">100%</span>
-<button class="hbtn hbtn-green" onclick="zoomPage(0.1)">➕</button>
-</div>
+    <button class="hbtn hbtn-green" onclick="bukaModalCari()">🔍 Cari Combo</button>
+    <button class="hbtn hbtn-green" id="btn-capture-grid">📋 Debug Grid</button>
+    <button class="hbtn hbtn-green" id="btn-copy-buffs">📊 Copy Buffs</button>
+    <button class="hbtn hbtn-green" id="btn-toggle-hero-table">📋 Hero Table</button>
+    <button class="hbtn hbtn-green" id="btn-export-cache">💾 Export Cache</button>
+    <input type="file" id="input-import-cache" accept=".json" style="display:none">
+    <button class="hbtn hbtn-green" id="btn-import-cache">📂 Import Cache</button>
+    <button class="hbtn hbtn-green" id="btn-clear-cache">🗑 Clear Cache</button>
+    <button class="hbtn hbtn-green" onclick="zoomPage(-0.1)">➖</button>
+    <span id="zoom-level" style="color:#d4af37;font-family:'Share Tech Mono',monospace;font-size:0.85rem;">100%</span>
+    <button class="hbtn hbtn-green" onclick="zoomPage(0.1)">➕</button>
+  </div>
 </div>
 
-
-<!-- ── BODY ── -->
 <div class="app-body">
   <div class="sidebar-left">
     <div class="sidebar-title">📋 Hero Daftar</div>
     <div class="filter-bar">
-      <select id="filter-gold" onchange="applyFilters()">
-        <option value="">Semua Gold</option>
-        <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-        <option value="4">4</option><option value="5">5</option>
-      </select>
-      <select id="filter-role"   onchange="applyFilters()"><option value="">Semua Role</option></select>
+      <select id="filter-gold" onchange="applyFilters()"><option value="">Semua Gold</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
+      <select id="filter-role" onchange="applyFilters()"><option value="">Semua Role</option></select>
       <select id="filter-fraksi" onchange="applyFilters()"><option value="">Semua Fraksi</option></select>
     </div>
     <div class="hero-list" id="hero-list"></div>
   </div>
 
-<div class="center-panel">
-<div style="display:flex; align-items:flex-start; width:100%;">
-    
-    <!-- Arena + Smart bawah -->
-    <div style="display:flex; flex-direction:column; gap:20px; flex:1;">
-      <div class="global-grid-wrap" id="global-grid-wrap"></div>
-      <div id="combo-ui-wrap">
-  <div id="combo-progress" style="display:none; width:100%; height:4px; background:#1a1f29; border-radius:2px; margin-top:4px;">
-    <div id="combo-progress-bar" style="height:100%; width:0%; background:#d4af37; border-radius:2px; transition:width 0.3s;"></div>
-  </div>
-  <div id="combo-progress-info" style="font-size:0.7rem; color:#d4af37; text-align:center; margin-top:2px;"></div>
-</div>
-      
-      <!-- Smart Placement -->
-      <div class="row-smart" id="smart-placement-row">
-        <div class="row-label" style="color:#3498db; font-family:'Share Tech Mono',monospace; font-size:0.75rem; letter-spacing:3px; text-align:center;">◈ SMART PLACEMENT</div>
-        <div class="row-slots" id="smart-placement-slots" style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;"></div>
-        <div id="sp-progress"><div id="sp-progress-bar"></div></div>
-        <div id="sp-log"></div>
-        <div id="sp-result"></div>
+  <div class="center-panel">
+    <div style="display:flex; align-items:flex-start; width:100%;">
+      <div style="display:flex; flex-direction:column; gap:20px; flex:1;">
+        <div class="global-grid-wrap" id="global-grid-wrap"></div>
+        <div id="combo-ui-wrap">
+          <div id="combo-progress" style="display:none; width:100%; height:4px; background:#1a1f29; border-radius:2px; margin-top:4px;">
+            <div id="combo-progress-bar" style="height:100%; width:0%; background:#d4af37; border-radius:2px; transition:width 0.3s;"></div>
+          </div>
+          <div id="combo-progress-info" style="font-size:0.7rem; color:#d4af37; text-align:center; margin-top:2px;"></div>
+        </div>
+        <div class="row-smart" id="smart-placement-row">
+          <div class="row-label" style="color:#3498db; font-family:'Share Tech Mono',monospace; font-size:0.75rem; letter-spacing:3px; text-align:center;">◈ SMART PLACEMENT</div>
+          <div class="row-slots" id="smart-placement-slots" style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;"></div>
+          <div id="sp-progress"><div id="sp-progress-bar"></div></div>
+          <div id="sp-log"></div><div id="sp-result"></div>
+        </div>
+      </div>
+      <div id="autoroll-wrap" style="display:flex; flex-direction:column; flex-shrink:0;">
+        <div style="font-family:'Share Tech Mono',monospace; font-size:0.75rem; color:#27ae60; letter-spacing:3px; text-align:center;">◈ AUTO ROLL</div>
+        <div id="autoroll-grid"></div>
       </div>
     </div>
-
-    <!-- Auto Roll (sejajar arena) -->
-<div id="autoroll-wrap" style="display:flex; flex-direction:column; flex-shrink:0;">
-      <div style="font-family:'Share Tech Mono',monospace; font-size:0.75rem; color:#27ae60; letter-spacing:3px; text-align:center;">◈ AUTO ROLL</div>
-      <div id="autoroll-grid"></div>
-    </div>
-
   </div>
-</div>
 
   <div class="sidebar-right">
-    <div class="score-header">
-      🏆 HERO SCORES
-      <span style="font-size:.7em; color:var(--text-dim); font-family:'Share Tech Mono',monospace;">(klik ▶ untuk detail)</span>
-      
-    </div>
+    <div class="score-header">🏆 HERO SCORES <span style="font-size:.7em; color:var(--text-dim); font-family:'Share Tech Mono',monospace;">(klik ▶ untuk detail)</span></div>
   </div>
 </div>
 
-
-<!-- ── MODAL DETAIL HERO ── -->
 <div class="detail-modal-overlay" id="detail-modal" style="display:none;">
   <div class="detail-modal-box">
     <div class="detail-modal-header">
@@ -391,24 +367,20 @@
     <div id="detail-modal-content"></div>
   </div>
 </div>
-<script>
-let _zoom = 1;
-function zoomPage(dir) {
-  _zoom = Math.min(2, Math.max(0.5, _zoom + dir));
-  _zoom = Math.round(_zoom * 10) / 10;
-  document.querySelector('.app-body').style.zoom = _zoom;
-  document.getElementById('zoom-level').textContent = Math.round(_zoom * 100) + '%';
-}
-</script>
 
-<!-- ── SCRIPT: HERO LIST & FILTER ── -->
+<script>
+  let _zoom = 1;
+  function zoomPage(dir) {
+    _zoom = Math.round(Math.min(2, Math.max(0.5, _zoom + dir)) * 10) / 10;
+    document.querySelector('.app-body').style.zoom = _zoom;
+    document.getElementById('zoom-level').textContent = Math.round(_zoom * 100) + '%';
+  }
+</script>
 <script type="module" src="./ui/hero_list.js"></script>
-<!-- ── SCRIPT: GRID & MODAL ── -->
 <script src="./ui/grid.js"></script>
-<!-- ── HEADER ── -->
 <script type="module" src="./ui/grid_table_sync.js"></script>
+<script type="module" src="./ui/combo_input.js"></script>
 <script type="module" src="./cache/cache_buttons.js"></script>
-<!-- ── PYTHON ── -->
 <script src="./ui/grid_sync_from_server.js"></script>
 <script src="./ui/smartplacement.js"></script>
 <script src="./ui/autoroll.js"></script>
